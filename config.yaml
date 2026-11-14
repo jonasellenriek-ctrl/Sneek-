@@ -7,8 +7,25 @@ report:
   send_empty: true
   max_deals: 150
 
+# Bewertung 1–10: wie stark jeder Faktor in die Gesamtnote eingeht
+rating_weights:
+  rabatt: 0.30
+  preis: 0.20
+  modell: 0.25
+  groesse: 0.15
+  shop: 0.10
+
 # Ab welchem Rabatt (in %) gemeldet wird
 min_discount_percent: 40
+
+# Schwerpunkt-Modelle: eigene Sektion ganz oben im Report ("Kobe-Radar"),
+# Extra-Suchen und niedrigere Rabatt-Schwelle, weil Kobes in US 16 selten sind.
+focus:
+  name: "Kobe-Radar"
+  keywords:
+    - kobe
+    - mamba
+  min_discount_percent: 20
 
 # Optional: Maximalpreis (in Shop-Währung). null = egal
 max_price: null
@@ -118,10 +135,14 @@ sources:
     country: de
     language: de
     queries:
+      # Schwerpunkt Kobe (6 Suchen/Tag ≈ 180/Monat – passt ins Gratis-Kontingent)
+      - "Nike Kobe Größe 50.5"
+      - "Nike Kobe Protro size 16"
+      - "Nike Kobe 6 8 9 sale EU 50.5"
+      # allgemein
       - "Basketballschuhe Herren Größe 50.5 Sale"
       - "basketball shoes size 16 sale"
       - "Nike Basketballschuh 50.5 reduziert"
-      - "adidas Basketballschuh 51 1/3 reduziert"
 
   # Shopping-Clubs (Zalando Lounge, BestSecret): nur mit Login sichtbar, deshalb
   # wertet der Bot deren Newsletter in deinem Postfach aus (IMAP, z. B. GMX).

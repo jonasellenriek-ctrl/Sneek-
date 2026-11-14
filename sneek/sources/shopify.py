@@ -19,6 +19,14 @@ def _size_option_index(product: dict) -> int | None:
     return None
 
 
+def _sized(url: str, width: int = 600) -> str:
+    """Shopify-CDN liefert kleinere Bilder über ?width=…"""
+    if not url:
+        return ""
+    url = "https:" + url if url.startswith("//") else url
+    return url + ("&" if "?" in url else "?") + f"width={width}"
+
+
 def deals_from_products(products: list[dict], shop: str, cfg: dict) -> list[Deal]:
     deals: list[Deal] = []
     host = urlparse(shop).netloc.removeprefix("www.")
@@ -30,6 +38,8 @@ def deals_from_products(products: list[dict], shop: str, cfg: dict) -> list[Deal
         if not is_basketball(text, cfg["basketball_keywords"], cfg["exclude_keywords"]):
             continue
         size_idx = _size_option_index(p)
+        imgs = p.get("images") or []
+        image = (imgs[0].get("src", "") if imgs and isinstance(imgs[0], dict) else "")
         for v in p.get("variants") or []:
             if not v.get("available", False):
                 continue
@@ -52,6 +62,7 @@ def deals_from_products(products: list[dict], shop: str, cfg: dict) -> list[Deal
                 old_price=old,
                 size=size_val,
                 size_verified=True,
+                image=_sized(image),
             ))
     return deals
 

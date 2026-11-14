@@ -109,3 +109,26 @@ def test_report():
     assert "1 neue" in subject and "Nike Sabrina 2" in html and "NEU" in html and "x.com" in html
     subject, html = build_report([], [], [], CFG)
     assert "keine Deals" in subject
+
+
+def test_rating_and_focus():
+    from sneek.models import Deal
+    from sneek.rating import rate
+    kobe = Deal("google:Nike", "Nike Kobe 6 Protro", "https://www.nike.com/x", 90, 190, "€")
+    meh = Deal("google:randomshop", "Some Hoop Shoe", "https://random.example/x", 150, 250, "€")
+    rk, rm = rate(kobe), rate(meh)
+    assert rk["modell"] == 10 and rk["gesamt"] > rm["gesamt"]
+    assert all(1 <= v <= 10 for v in rk.values())
+    cfg = dict(CFG)
+    kobe.extra["focus"] = True          # 52 % -> ok; 25 % Kobe auch ok (Schwelle 20)
+    kobe.price = 142
+    assert is_good_deal(kobe, cfg)
+    subject, html = build_report([kobe], [kobe], [], cfg)
+    assert "Kobe" in subject and "Kobe-Radar" in html and "nike.com" in html
+
+
+def test_direct_link():
+    from sneek.sources.google_shopping import direct_link
+    assert direct_link({"link": "https://www.zalando.de/p1", "product_link": "https://www.google.com/shopping/product/1"}) == "https://www.zalando.de/p1"
+    assert direct_link({"link": "https://www.google.com/url?url=https://www.snipes.com/p2&sa=x"}) == "https://www.snipes.com/p2"
+    assert direct_link({"product_link": "https://www.google.com/shopping/product/1"}).startswith("https://www.google.com")

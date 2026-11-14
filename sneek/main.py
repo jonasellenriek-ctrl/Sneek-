@@ -15,6 +15,7 @@ from pathlib import Path
 import yaml
 
 from . import http, notify
+from .matching import contains_any
 from .models import Deal
 from .sources import google_shopping, newsletter_mail, shopify
 
@@ -33,7 +34,9 @@ def is_good_deal(d: Deal, cfg: dict) -> bool:
     if d.extra.get("club"):
         return True  # Aktionen ohne Einzelpreis – Stichwortfilter reicht
     pct = d.discount_percent
-    if pct is None or pct < cfg["min_discount_percent"]:
+    focus = cfg.get("focus") or {}
+    threshold = focus.get("min_discount_percent", 0) if d.extra.get("focus") else cfg["min_discount_percent"]
+    if pct is None or pct < threshold:
         return False
     if cfg.get("max_price") is not None and d.price is not None and d.price > cfg["max_price"]:
         return False
@@ -73,6 +76,9 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     if sources.get("newsletter_mail", {}).get("enabled"):
         deals += newsletter_mail.search(cfg)
 
+    focus_kw = (cfg.get("focus") or {}).get("keywords", [])
+    for d in deals:
+        d.extra["focus"] = bool(focus_kw) and contains_any(d.title, focus_kw)
     good = [d for d in deals if is_good_deal(d, cfg)]
     good.sort(key=lambda d: -(d.discount_percent or 0))
     # Doppelte (gleicher Shop/Link/Größe) zusammenfassen
@@ -96,16 +102,17 @@ def main() -> None:
     deals, new = run(cfg, state)
     log.info("%d neue Deals", len(new))
 
-    subject, html = notify.build_report(deals, new, http.ERRORS, cfg)
-    if args.preview:
-        Path(args.preview).write_text(html)
-    if args.dry_run:
+    if args.preview or args.dry_run:
+        subject, html = notify.build_report(deals, new, http.ERRORS, cfg)
+        if args.preview:
+            Path(args.preview).write_text(html)
         print(subject)
+    if args.dry_run:
         for d in deals:
             print("\n" + d.format())
         return
     if deals or cfg.get("report", {}).get("send_empty", True):
-        notify.send_email(subject, html)
+        notify.send_report(deals, new, http.ERRORS, cfg)
     notify.telegram(new)
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, indent=1, sort_keys=True))

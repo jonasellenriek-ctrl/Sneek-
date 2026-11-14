@@ -14,6 +14,7 @@ class Deal:
     size: str = ""         # gefundene Größe, leer = unbekannt
     size_verified: bool = False
     note: str = ""
+    image: str = ""        # Produktbild-URL
     extra: dict = field(default_factory=dict)
 
     @property

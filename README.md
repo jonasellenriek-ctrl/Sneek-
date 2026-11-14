@@ -2,8 +2,9 @@
 
 Sneek sucht **jeden Morgen automatisch** nach **stark reduzierten Basketballschuhen in Größe US 16**
 (EU 50.5 / UK 15) und schickt dir einen **Tages-Report per E-Mail**: alle aktuellen Deals,
-sortiert nach Rabatt, neue seit gestern mit „NEU“ markiert. Dazu die passenden Aktionen von
-**Zalando Lounge** und **BestSecret**.
+jeder Schuh mit Foto, direktem Link in den Shop und einer **Bewertung von 1–10**
+(Rabatt, Preis, Modell, Größen-Sicherheit, Shop). Ganz oben: das **🐍 Kobe-Radar** für Nike Kobe in US 16.
+Dazu die passenden Aktionen von **Zalando Lounge** und **BestSecret**.
 
 ## Woher die Deals kommen
 
@@ -33,7 +34,7 @@ Beispiel GMX:
    - `IMAP_PASSWORD` = dein GMX-Passwort (bzw. App-Passwort, falls 2FA aktiv)
 
 Der Report wird über denselben Account verschickt (bei GMX automatisch über `mail.gmx.net`)
-und landet in genau diesem Postfach. Andere Empfänger-Adresse: Secret `ALERT_EMAIL_TO`.
+und landet in genau diesem Postfach. Soll er woanders hin, Secret `ALERT_EMAIL_TO` setzen.
 Anderer Anbieter: zusätzlich `SMTP_HOST` (und ggf. `SMTP_PORT`, Standard 587) setzen.
 
 3. Im **Zalando-Lounge-** und im **BestSecret-Konto** den Newsletter aktivieren, an diese Adresse.
@@ -54,6 +55,8 @@ In Telegram **@BotFather** → `/newbot` → Token als `TELEGRAM_BOT_TOKEN`; dem
 ## Anpassen – `config.yaml`
 - `report.send_empty`: auch an Tagen ohne Deals eine kurze Mail schicken (Standard: ja)
 - Uhrzeit: in `.github/workflows/sneek.yml` die `cron`-Zeile (UTC)
+- `focus`: Schwerpunkt-Modelle (Standard: Kobe, ab 20 % Rabatt)
+- `rating_weights`: Gewichtung der Bewertungs-Faktoren
 - `min_discount_percent`: ab wie viel Rabatt gemeldet wird (Standard **40 %**)
 - `max_price`: Preisobergrenze
 - `size_aliases`: wie US 16 in den Shops heißt (Nike EU 50.5, adidas EU 51 1/3 …)
