@@ -10,12 +10,12 @@ from __future__ import annotations
 import email
 import imaplib
 import logging
-import os
 import re
 from datetime import datetime, timedelta
 from email.header import decode_header, make_header
 from html import unescape
 
+from ..http import ERRORS, env
 from ..matching import contains_any
 from ..models import Deal
 
@@ -54,7 +54,7 @@ def deal_from_message(msg: email.message.Message, club: dict, keywords: list[str
 
 
 def search(cfg: dict) -> list[Deal]:
-    host, user, pw = (os.environ.get(k) for k in ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD"))
+    host, user, pw = (env(k) for k in ("IMAP_HOST", "IMAP_USER", "IMAP_PASSWORD"))
     if not (host and user and pw):
         log.info("Newsletter-Mails übersprungen (IMAP_HOST/IMAP_USER/IMAP_PASSWORD fehlen)")
         return []
@@ -78,6 +78,5 @@ def search(cfg: dict) -> list[Deal]:
                 log.info("%s: %d passende Aktionen", club["name"], found)
     except (imaplib.IMAP4.error, OSError) as e:
         log.warning("IMAP-Fehler: %s", e)
-        from ..http import ERRORS
         ERRORS.append(f"Postfach (IMAP): {e}")
     return deals

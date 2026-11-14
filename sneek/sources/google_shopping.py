@@ -7,9 +7,8 @@ Treffer werden deshalb mit "Größe bitte prüfen" gemeldet.
 from __future__ import annotations
 
 import logging
-import os
 
-from ..http import get_json
+from ..http import env, get_json
 from ..matching import is_basketball
 from ..models import Deal
 
@@ -39,7 +38,7 @@ def deals_from_results(results: list[dict], cfg: dict) -> list[Deal]:
 
 
 def search(cfg: dict) -> list[Deal]:
-    key = os.environ.get("SERPAPI_KEY")
+    key = env("SERPAPI_KEY")
     if not key:
         log.info("Google Shopping übersprungen (kein SERPAPI_KEY gesetzt)")
         return []

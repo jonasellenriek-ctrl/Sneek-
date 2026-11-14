@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 
 import requests
 from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
+
+def env(name: str, default: str | None = None) -> str | None:
+    """Umgebungsvariable lesen und versehentliche Leerzeichen/Zeilenumbrüche
+    (z. B. beim Kopieren in GitHub-Secrets) entfernen."""
+    v = os.environ.get(name)
+    v = v.strip() if v else v
+    return v or default
+
 
 # Fehler dieses Laufs – erscheinen unten im Report
 ERRORS: list[str] = []

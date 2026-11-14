@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import os
 import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
@@ -11,6 +10,7 @@ from html import escape
 
 import requests
 
+from .http import env
 from .models import Deal
 
 log = logging.getLogger(__name__)
@@ -79,10 +79,10 @@ def build_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dic
 
 
 def send_email(subject: str, html: str) -> bool:
-    user = os.environ.get("SMTP_USER") or os.environ.get("IMAP_USER")
-    pw = os.environ.get("SMTP_PASSWORD") or os.environ.get("IMAP_PASSWORD")
-    host = os.environ.get("SMTP_HOST") or SMTP_DEFAULTS.get((os.environ.get("IMAP_HOST") or "").lower())
-    to = os.environ.get("ALERT_EMAIL_TO") or user
+    user = env("SMTP_USER") or env("IMAP_USER")
+    pw = env("SMTP_PASSWORD") or env("IMAP_PASSWORD")
+    host = env("SMTP_HOST") or SMTP_DEFAULTS.get((env("IMAP_HOST") or "").lower())
+    to = env("ALERT_EMAIL_TO") or user
     if not (host and user and pw and to):
         log.warning("E-Mail nicht konfiguriert (SMTP_* bzw. IMAP_* Secrets fehlen)")
         return False
@@ -91,7 +91,7 @@ def send_email(subject: str, html: str) -> bool:
     msg.attach(MIMEText("Bitte HTML-Ansicht verwenden.", "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
     try:
-        with smtplib.SMTP(host, int(os.environ.get("SMTP_PORT") or 587), timeout=30) as s:
+        with smtplib.SMTP(host, int(env("SMTP_PORT") or 587), timeout=30) as s:
             s.starttls()
             s.login(user, pw)
             s.send_message(msg)
@@ -104,7 +104,7 @@ def send_email(subject: str, html: str) -> bool:
 
 def telegram(deals: list[Deal]) -> None:
     """Optional: neue Deals zusätzlich sofort per Telegram."""
-    token, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
+    token, chat = env("TELEGRAM_BOT_TOKEN"), env("TELEGRAM_CHAT_ID")
     if not (token and chat):
         return
     for d in deals:
