@@ -96,7 +96,7 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     resellers = [d for d in deals if d.source.startswith("google:") and verify.is_reseller(d)]
     deals = [d for d in deals if d not in resellers]
     log.info("%d Google-Treffer von Marktplätzen verworfen (Preis gilt nicht für US 16; "
-             "StockX/GOAT kommen größengenau über KicksDB)", len(resellers))
+             "StockX kommt größengenau über pckt.sh)", len(resellers))
 
     good = [d for d in deals if is_good_deal(d, cfg)]
     good.sort(key=lambda d: -(d.discount_percent or 0))

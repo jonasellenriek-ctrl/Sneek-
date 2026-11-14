@@ -96,7 +96,7 @@ def _card(d: Deal, is_new: bool, img: str, weights: dict, accent: str) -> str:
     price_html = ""
     if d.price is not None:
         price_html = f"<span style='font:800 26px {FONT};color:{INK}'>{_money(d.price, d.currency)}</span>"
-        if d.old_price:
+        if d.old_price and d.old_price > d.price:  # nur durchstreichen, wenn wirklich teurer
             price_html += (f"&nbsp;&nbsp;<span style='font:500 15px {FONT};color:{MUTED};text-decoration:line-through'>"
                            f"{_money(d.old_price, d.currency)}</span>")
 
@@ -213,7 +213,7 @@ def build_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dic
                    "das die Kriterien erfüllt. Morgen wieder! 🙂</div>")
 
     foot = ("Bewertung 1–10 aus Rabatt, Preis, Modell, Größen-Sicherheit und Shop. "
-            "Preise sind direkt auf der Shop-Seite für US 16 geprüft (lieferbar). StockX/GOAT: exakter Preis für US 16 laut KicksDB, zzgl. Plattform-Gebühren.")
+            "Preise sind direkt auf der Shop-Seite für US 16 geprüft (lieferbar). StockX: günstigstes Angebot genau in US 16 (Daten: pckt.sh), zzgl. Gebühren.")
     if errors:
         foot += "<br><br>Nicht erreichbar: " + escape("; ".join(errors))
     out.append(f"<div style='font:500 11px/1.5 {FONT};color:#71717a;padding:24px 6px 8px;text-align:center'>{foot}</div>")
