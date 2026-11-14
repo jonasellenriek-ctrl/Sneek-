@@ -158,6 +158,8 @@ sources:
   marketplaces:
     enabled: true
     us_size: "16"
+    country: DE               # StockX-Markt Deutschland …
+    currency: EUR             # … Preise in Euro
     queries:
       - "kobe protro"
       - "kobe"
@@ -165,8 +167,8 @@ sources:
     max_price_checks: 10      # so viele Produkte werden pro Lauf auf den US-16-Preis geprüft
     # Melden, wenn US 16 mind. so viel günstiger ist als der Ø der anderen Größen …
     min_discount_percent: 15
-    # … oder wenn der US-16-Preis unter dieser Grenze liegt (Dollar). null = aus
-    always_show_below: 230
+    # … oder wenn der US-16-Preis unter dieser Grenze liegt (Euro). null = aus
+    always_show_below: 220
 
   # Shopping-Clubs (Zalando Lounge, BestSecret): nur mit Login sichtbar, deshalb
   # wertet der Bot deren Newsletter in deinem Postfach aus (IMAP, z. B. GMX).

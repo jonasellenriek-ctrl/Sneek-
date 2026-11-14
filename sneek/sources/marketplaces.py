@@ -2,12 +2,14 @@
 
 Ablauf (jede Anfrage kostet 1 Credit, Gratis-Plan: 500 Credits/Monat):
   1. /v1/stockx/search?query=…   -> Produkte inkl. Liste der Größen (ohne Größen-Preise)
-  2. /v1/stockx/asks?id=<urlKey> -> alle Angebote je Größe; daraus das günstigste in US 16
+  2. /v1/stockx/asks?id=<UUID>&country_code=DE&currency_code=EUR
+                                 -> alle Angebote je Größe; daraus das günstigste in US 16
 
 Nur Produkte, die US 16 überhaupt führen, werden in Schritt 2 abgefragt –
 Kobe zuerst, höchstens `max_price_checks` pro Lauf.
 
-Die Preise kommen vom US-Markt von StockX (US-Dollar), zzgl. Gebühren/Versand/Zoll.
+Preise vom deutschen StockX-Markt in Euro (country_code=DE, currency_code=EUR),
+zzgl. StockX-Gebühren und Versand.
 Braucht den Secret KICKSDB_API_KEY (pckt.sh-Key, beginnt mit "pkt_").
 """
 from __future__ import annotations
@@ -123,21 +125,26 @@ def search(cfg: dict) -> list[Deal]:
         sales = (((n.get("market") or {}).get("salesInformation") or {}).get("salesLast72Hours")) or 0
         return (not contains_any(n.get("title", ""), focus_kw), -sales)
 
+    cur = {"EUR": "€", "USD": "$", "GBP": "£"}.get(mcfg.get("currency", "EUR"), mcfg.get("currency", ""))
     deals: list[Deal] = []
     for n in sorted(candidates.values(), key=prio)[: int(mcfg.get("max_price_checks", 10))]:
-        price, others = size_prices(_get("/stockx/asks", {"id": n["urlKey"]}, key), size)
+        price, others = size_prices(_get("/stockx/asks", {
+            "id": n.get("id") or n["urlKey"],
+            "country_code": mcfg.get("country", "DE"),
+            "currency_code": mcfg.get("currency", "EUR"),
+        }, key), size)
         if price is None:
             log.info("  %s: kein Angebot in US %s", n.get("title"), size)
             continue
         avg = sum(others) / len(others) if others else None
-        log.info("  %s: US %s ab %.0f $ (Ø andere Größen %s)", n.get("title"), size, price,
-                 f"{avg:.0f} $" if avg else "–")
+        log.info("  %s: US %s ab %.0f %s (Ø andere Größen %s)", n.get("title"), size, price, cur,
+                 f"{avg:.0f} {cur}" if avg else "–")
         deals.append(Deal(
             source="StockX", title=n.get("title") or "", url=f"https://stockx.com/{n['urlKey']}",
-            price=price, old_price=avg, currency="$", size=f"US {size}", size_verified=True,
+            price=price, old_price=avg, currency=cur, size=f"US {size}", size_verified=True,
             image=((n.get("media") or {}).get("thumbUrl")) or "",
-            note="StockX-Angebot genau in US 16 (US-Markt, Dollar) · Vergleich: Ø-Preis der anderen Größen"
-                 " · zzgl. Gebühren, Versand und ggf. Zoll",
+            note=f"StockX-Angebot genau in US 16 (Markt {mcfg.get('country', 'DE')}) · Vergleich: "
+                 "Ø-Preis der anderen Größen · zzgl. StockX-Gebühren und Versand",
             extra={"key": f"stockx|{n['urlKey']}|{size}", "market": True,
                    "min_pct": mcfg.get("min_discount_percent", 15),
                    "max_ok_price": mcfg.get("always_show_below", None)},
