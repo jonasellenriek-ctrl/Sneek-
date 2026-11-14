@@ -4,8 +4,19 @@ import logging
 import time
 
 import requests
+from urllib.parse import urlparse
 
 log = logging.getLogger(__name__)
+
+# Fehler dieses Laufs – erscheinen unten im Report
+ERRORS: list[str] = []
+
+
+def _err(url: str, msg: str) -> None:
+    host = urlparse(url).netloc or url
+    log.warning("%s -> %s", url, msg)
+    if not any(e.startswith(host) for e in ERRORS):
+        ERRORS.append(f"{host}: {msg[:120]}")
 
 HEADERS = {
     "User-Agent": (
@@ -27,12 +38,12 @@ def get_json(url: str, params: dict | None = None, retries: int = 2, timeout: in
                 time.sleep(5 * (attempt + 1))
                 continue
             if r.status_code != 200:
-                log.warning("%s -> HTTP %s", url, r.status_code)
+                _err(url, f"HTTP {r.status_code}")
                 return None
             return r.json()
         except (requests.RequestException, ValueError) as e:
             if attempt < retries:
                 time.sleep(2 * (attempt + 1))
                 continue
-            log.warning("%s -> %s", url, e)
+            _err(url, type(e).__name__)
     return None

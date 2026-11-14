@@ -1,6 +1,12 @@
 # Sneek – Konfiguration des Deal-Bots
 # Alles hier kann angepasst werden, ohne Code zu ändern.
 
+# Täglicher E-Mail-Report
+report:
+  # immer schicken, auch wenn nichts gefunden wurde (damit du siehst, dass er läuft)
+  send_empty: true
+  max_deals: 150
+
 # Ab welchem Rabatt (in %) gemeldet wird
 min_discount_percent: 40
 
@@ -108,7 +114,7 @@ sources:
   # Braucht den Secret SERPAPI_KEY (kostenloses Kontingent reicht bei 2x täglich).
   google_shopping:
     enabled: true
-    min_interval_hours: 12  # spart API-Kontingent
+    min_interval_hours: 20  # 1x pro Tag, spart API-Kontingent
     country: de
     language: de
     queries:
@@ -117,13 +123,20 @@ sources:
       - "Nike Basketballschuh 50.5 reduziert"
       - "adidas Basketballschuh 51 1/3 reduziert"
 
-  # Zalando Lounge: Shop ist nur mit Login sichtbar, deshalb wertet der Bot
-  # die Zalando-Lounge-E-Mails in deinem Postfach aus (IMAP, z. B. GMX).
+  # Shopping-Clubs (Zalando Lounge, BestSecret): nur mit Login sichtbar, deshalb
+  # wertet der Bot deren Newsletter in deinem Postfach aus (IMAP, z. B. GMX).
   # Braucht die Secrets IMAP_HOST, IMAP_USER, IMAP_PASSWORD.
-  zalando_lounge_mail:
+  # Wichtig: Newsletter beider Shops im jeweiligen Konto aktivieren.
+  newsletter_mail:
     enabled: true
-    sender_contains: "zalando-lounge"
-    lookback_days: 3
+    lookback_days: 2
+    clubs:
+      - name: Zalando Lounge
+        sender_contains: "zalando-lounge"
+        url: "https://www.zalando-lounge.de/"
+      - name: BestSecret
+        sender_contains: "bestsecret"
+        url: "https://www.bestsecret.com/"
     keywords:
       - basketball
       - nike

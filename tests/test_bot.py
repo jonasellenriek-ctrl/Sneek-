@@ -4,8 +4,9 @@ from pathlib import Path
 import yaml
 
 from sneek.main import is_good_deal, select_new
+from sneek.notify import build_report
 from sneek.matching import is_basketball, size_matches
-from sneek.sources import google_shopping, shopify, zalando_lounge_mail
+from sneek.sources import google_shopping, newsletter_mail, shopify
 
 CFG = yaml.safe_load((Path(__file__).resolve().parent.parent / "config.yaml").read_text())
 A = CFG["size_aliases"]
@@ -76,13 +77,21 @@ def test_lounge_mail():
     m["From"] = "news@zalando-lounge.de"
     m["Message-ID"] = "<abc@x>"
     m.set_content('Jetzt shoppen: <a href="https://www.zalando-lounge.de/campaigns/ZZO1">hier</a> bis zu -70 %')
-    d = zalando_lounge_mail.deal_from_message(m, CFG["sources"]["zalando_lounge_mail"])
+    mcfg = CFG["sources"]["newsletter_mail"]
+    lounge, best = mcfg["clubs"]
+    d = newsletter_mail.deal_from_message(m, lounge, mcfg["keywords"])
     assert d and "ZZO1" in d.url and d.extra["max_pct"] == 70 and is_good_deal(d, CFG)
 
     m2 = EmailMessage()
     m2["Subject"] = "Bettwäsche bis zu -60%"
     m2.set_content("Kissen und Decken")
-    assert zalando_lounge_mail.deal_from_message(m2, CFG["sources"]["zalando_lounge_mail"]) is None
+    assert newsletter_mail.deal_from_message(m2, lounge, mcfg["keywords"]) is None
+
+    m3 = EmailMessage()
+    m3["Subject"] = "Neu: Jordan & adidas Sneaker"
+    m3.set_content('<a href="https://www.bestsecret.com/campaign/123">Zur Aktion</a> -60%')
+    d3 = newsletter_mail.deal_from_message(m3, best, mcfg["keywords"])
+    assert d3 and d3.url.endswith("/campaign/123") and d3.source.startswith("BestSecret")
 
 
 def test_dedupe_and_price_drop():
@@ -92,3 +101,11 @@ def test_dedupe_and_price_drop():
     assert select_new(deals, state) == []          # schon gemeldet
     deals[0].price = 50
     assert len(select_new(deals, state)) == 1      # weiter gefallen -> erneut melden
+
+
+def test_report():
+    deals = shopify.deals_from_products(PRODUCTS, "https://s.com", CFG)
+    subject, html = build_report(deals, deals, ["x.com: HTTP 403"], CFG)
+    assert "1 neue" in subject and "Nike Sabrina 2" in html and "NEU" in html and "x.com" in html
+    subject, html = build_report([], [], [], CFG)
+    assert "keine Deals" in subject

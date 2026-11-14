@@ -1,7 +1,8 @@
-"""Ein Suchlauf: alle Quellen abfragen, filtern, neue Deals melden.
+"""Ein Suchlauf: alle Quellen abfragen, filtern und den Tages-Report mailen.
 
-Start:  python -m sneek.main            (normal)
-        python -m sneek.main --dry-run  (nichts senden, State nicht speichern)
+Start:  python -m sneek.main                  (normal)
+        python -m sneek.main --dry-run        (nichts senden, State nicht speichern)
+        python -m sneek.main --preview r.html (Report zusätzlich als HTML-Datei speichern)
 """
 from __future__ import annotations
 
@@ -13,9 +14,9 @@ from pathlib import Path
 
 import yaml
 
-from . import notify
+from . import http, notify
 from .models import Deal
-from .sources import google_shopping, shopify, zalando_lounge_mail
+from .sources import google_shopping, newsletter_mail, shopify
 
 ROOT = Path(__file__).resolve().parent.parent
 log = logging.getLogger("sneek")
@@ -29,7 +30,7 @@ def load_state(path: Path) -> dict:
 
 
 def is_good_deal(d: Deal, cfg: dict) -> bool:
-    if d.source.startswith("zalando-lounge"):
+    if d.extra.get("club"):
         return True  # Aktionen ohne Einzelpreis – Stichwortfilter reicht
     pct = d.discount_percent
     if pct is None or pct < cfg["min_discount_percent"]:
@@ -58,7 +59,8 @@ def due(name: str, hours: float, state: dict) -> bool:
     return time.time() - last >= hours * 3600
 
 
-def run(cfg: dict, state: dict) -> list[Deal]:
+def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
+    """Gibt (alle guten Deals, davon neue) zurück."""
     sources = cfg["sources"]
     deals: list[Deal] = []
     if sources.get("shopify", {}).get("enabled"):
@@ -67,13 +69,15 @@ def run(cfg: dict, state: dict) -> list[Deal]:
     if gs.get("enabled") and due("google_shopping", gs.get("min_interval_hours", 12), state):
         deals += google_shopping.search(cfg)
         state["last_run"]["google_shopping"] = int(time.time())
-    if sources.get("zalando_lounge_mail", {}).get("enabled"):
-        deals += zalando_lounge_mail.search(cfg)
+    if sources.get("newsletter_mail", {}).get("enabled"):
+        deals += newsletter_mail.search(cfg)
 
     good = [d for d in deals if is_good_deal(d, cfg)]
     good.sort(key=lambda d: -(d.discount_percent or 0))
-    log.info("%d Treffer insgesamt, %d gute Deals", len(deals), len(good))
-    return select_new(good, state)
+    # Doppelte (gleicher Shop/Link/Größe) zusammenfassen
+    unique = list({d.key: d for d in good}.values())
+    log.info("%d Treffer insgesamt, %d gute Deals", len(deals), len(unique))
+    return unique, select_new(unique, state)
 
 
 def main() -> None:
@@ -81,20 +85,27 @@ def main() -> None:
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     ap.add_argument("--state", default=str(ROOT / "state" / "seen.json"))
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--preview", help="Report zusätzlich als HTML-Datei speichern")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     cfg = yaml.safe_load(Path(args.config).read_text())
     state_path = Path(args.state)
     state = load_state(state_path)
-    new = run(cfg, state)
+    deals, new = run(cfg, state)
     log.info("%d neue Deals", len(new))
 
+    subject, html = notify.build_report(deals, new, http.ERRORS, cfg)
+    if args.preview:
+        Path(args.preview).write_text(html)
     if args.dry_run:
-        for d in new:
+        print(subject)
+        for d in deals:
             print("\n" + d.format())
         return
-    notify.send(new)
+    if deals or cfg.get("report", {}).get("send_empty", True):
+        notify.send_email(subject, html)
+    notify.telegram(new)
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, indent=1, sort_keys=True))
 

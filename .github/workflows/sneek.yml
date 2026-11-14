@@ -1,8 +1,8 @@
-name: Sneek Deal-Suche
+name: Sneek Tages-Report
 
 on:
   schedule:
-    - cron: "*/30 * * * *"   # alle 30 Minuten
+    - cron: "17 6 * * *"     # täglich ~07:17 Uhr (Winterzeit) / 08:17 (Sommerzeit)
   workflow_dispatch: {}       # manuell starten über "Run workflow"
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Suchen und melden
+      - name: Suchen und Report mailen
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
