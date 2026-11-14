@@ -1,0 +1,139 @@
+# Sneek – Konfiguration des Deal-Bots
+# Alles hier kann angepasst werden, ohne Code zu ändern.
+
+# Ab welchem Rabatt (in %) gemeldet wird
+min_discount_percent: 40
+
+# Optional: Maximalpreis (in Shop-Währung). null = egal
+max_price: null
+
+# Größen-Bezeichnungen, die als "US 16" gelten.
+# Shops schreiben Größen sehr unterschiedlich (US / UK / EU, je nach Marke).
+#   Nike/Jordan: US 16 = UK 15 = EU 50.5
+#   adidas:      US 16 = UK 15.5 = EU 51 1/3
+#   Puma/NB/UA weichen teils ab – bei Bedarf ergänzen.
+size_aliases:
+  - "US 16"
+  - "US16"
+  - "M 16"
+  - "16"
+  - "UK 15"
+  - "UK 15.5"
+  - "EU 50.5"
+  - "50.5"
+  - "50,5"
+  - "51 1/3"
+  - "51.3"
+
+# Woran ein Basketballschuh erkannt wird (Titel, Produkttyp, Tags; Groß/klein egal)
+basketball_keywords:
+  - basketball
+  - bball
+  - hoop
+  - lebron
+  - kobe
+  - giannis
+  - "kd "
+  - "kd1"
+  - "ja 1"
+  - "ja 2"
+  - "ja 3"
+  - sabrina
+  - harden
+  - "dame "
+  - curry
+  - "ae 1"
+  - zion
+  - luka
+  - tatum
+  - "mb.0"
+  - lamelo
+  - "trae young"
+  - "g.t. cut"
+  - "gt cut"
+  - "gt jump"
+  - "gt hustle"
+  - "air jordan"
+  - "jordan "
+  - "anthony edwards"
+  - "way of wade"
+  - "freak "
+
+# Diese Wörter schließen ein Produkt aus (z. B. Kinder-Schuhe, Bälle, Socken)
+exclude_keywords:
+  - "(gs)"
+  - "(ps)"
+  - "(td)"
+  - kids
+  - kinder
+  - "grade school"
+  - socks
+  - socken
+  - " ball "
+  - shorts
+  - jersey
+  - trikot
+  - slide
+  - hoodie
+  - "t-shirt"
+  - " tee "
+  - " cap "
+  - pants
+  - jogger
+  - backpack
+  - rucksack
+
+sources:
+  # Shopify-Shops: werden direkt über ihre öffentliche Produkt-Schnittstelle
+  # durchsucht (genaue Größen- und Preisdaten). Beliebig erweiterbar.
+  shopify:
+    enabled: true
+    max_pages: 8          # je 250 Produkte
+    shops:
+      - https://www.shoepalace.com
+      - https://www.jimmyjazz.com
+      - https://www.dtlr.com
+      - https://www.sneakerpolitics.com
+      - https://www.a-ma-maniere.com
+      - https://www.socialstatuspgh.com
+      - https://kith.com
+      - https://undefeated.com
+      - https://bdgastore.com
+      - https://cncpts.com
+      - https://www.overkillshop.com
+      - https://www.allikestore.com
+
+  # Google Shopping über SerpAPI = "das gesamte Internet" (Zalando, About You,
+  # Snipes, Foot Locker, Nike, adidas, Kickz, Amazon, eBay, ...).
+  # Braucht den Secret SERPAPI_KEY (kostenloses Kontingent reicht bei 2x täglich).
+  google_shopping:
+    enabled: true
+    min_interval_hours: 12  # spart API-Kontingent
+    country: de
+    language: de
+    queries:
+      - "Basketballschuhe Herren Größe 50.5 Sale"
+      - "basketball shoes size 16 sale"
+      - "Nike Basketballschuh 50.5 reduziert"
+      - "adidas Basketballschuh 51 1/3 reduziert"
+
+  # Zalando Lounge: Shop ist nur mit Login sichtbar, deshalb wertet der Bot
+  # die Zalando-Lounge-E-Mails in deinem Postfach aus (IMAP, z. B. GMX).
+  # Braucht die Secrets IMAP_HOST, IMAP_USER, IMAP_PASSWORD.
+  zalando_lounge_mail:
+    enabled: true
+    sender_contains: "zalando-lounge"
+    lookback_days: 3
+    keywords:
+      - basketball
+      - nike
+      - jordan
+      - adidas
+      - puma
+      - "under armour"
+      - "new balance"
+      - sneaker
+      - sportschuhe
+      - "big size"
+      - "große größen"
+      - "xxl"
