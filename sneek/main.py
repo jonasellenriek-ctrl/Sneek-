@@ -86,6 +86,10 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     # Doppelte (gleicher Shop/Link/Größe) zusammenfassen
     unique = list({d.key: d for d in good}.values())
     log.info("%d Treffer insgesamt, %d gute Deals", len(deals), len(unique))
+    # Google-Links in direkte Shop-Links umwandeln – Kobe zuerst, dann nach Rabatt
+    order = sorted(unique, key=lambda d: (not d.extra.get("focus"), -(d.discount_percent or 0)))
+    google_shopping.resolve_links(order, state.setdefault("links", {}),
+                                  int(gs.get("resolve_links_per_run", 6)))
     return unique, select_new(unique, state)
 
 

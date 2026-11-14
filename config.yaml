@@ -132,6 +132,9 @@ sources:
   google_shopping:
     enabled: true
     min_interval_hours: 20  # 1x pro Tag, spart API-Kontingent
+    # Direkte Shop-Links: kostet 1 Abfrage je neuem Schuh (wird gemerkt).
+    # Höchstens so viele pro Tag – Kobe zuerst.
+    resolve_links_per_run: 6
     country: de
     language: de
     queries:

@@ -132,3 +132,15 @@ def test_direct_link():
     assert direct_link({"link": "https://www.zalando.de/p1", "product_link": "https://www.google.com/shopping/product/1"}) == "https://www.zalando.de/p1"
     assert direct_link({"link": "https://www.google.com/url?url=https://www.snipes.com/p2&sa=x"}) == "https://www.snipes.com/p2"
     assert direct_link({"product_link": "https://www.google.com/shopping/product/1"}).startswith("https://www.google.com")
+
+
+def test_store_link():
+    from sneek.sources.google_shopping import store_link
+    data = {"product_results": {"stores": [
+        {"name": "Google", "link": "https://www.google.com/x"},
+        {"name": "eBay", "link": "https://www.ebay.de/itm/1"},
+        {"name": "Basket4Ballers", "link": "https://www.basket4ballers.com/de/kobe"},
+    ]}}
+    assert store_link(data, "Basket4Ballers") == "https://www.basket4ballers.com/de/kobe"
+    assert store_link(data, "Unbekannt") == "https://www.ebay.de/itm/1"
+    assert store_link({}, "x") == ""

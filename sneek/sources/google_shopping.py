@@ -54,8 +54,54 @@ def deals_from_results(results: list[dict], cfg: dict) -> list[Deal]:
             price=float(price),
             old_price=float(old),
             note=f"Gefunden über Google Shopping bei {r.get('source', '?')}",
+            # stabiler Schlüssel, damit sich "schon gesehen" nicht ändert, wenn der Link aufgelöst wird
+            extra={"key": f"google|{r.get('source', '?')}|{title}",
+                   "gtoken": r.get("immersive_product_page_token") or ""},
         ))
     return deals
+
+
+def _norm(s: str) -> str:
+    return "".join(ch for ch in s.lower() if ch.isalnum())
+
+
+def store_link(data: dict, source: str) -> str:
+    """Aus der Google-Produktseite den Link des Shops holen, der den Deal hat."""
+    stores = ((data or {}).get("product_results") or {}).get("stores") or []
+    want = _norm(source)
+    best = ""
+    for st in stores:
+        link = st.get("link") or ""
+        if not link.startswith("http") or "google." in urlparse(link).netloc:
+            continue
+        name = _norm(st.get("name", ""))
+        if want and name and (want in name or name in want):
+            return link
+        best = best or link
+    return best
+
+
+def resolve_links(deals: list[Deal], cache: dict, limit: int) -> int:
+    """Ersetzt Google-Links durch direkte Shop-Links (1 SerpAPI-Abfrage je Schuh,
+    Ergebnis wird gemerkt). Gibt die Zahl der Abfragen zurück."""
+    key = env("SERPAPI_KEY")
+    used = 0
+    for d in deals:
+        if "google." not in urlparse(d.url).netloc:
+            continue
+        if d.key in cache:
+            d.url = cache[d.key]
+            continue
+        if not key or used >= limit or not d.extra.get("gtoken"):
+            continue
+        used += 1
+        data = get_json(API, params={"engine": "google_immersive_product",
+                                     "page_token": d.extra["gtoken"], "api_key": key})
+        link = store_link(data, d.source.removeprefix("google:"))
+        if link:
+            d.url = cache[d.key] = link
+            log.info("Direktlink: %s -> %s", d.title, urlparse(link).netloc)
+    return used
 
 
 def search(cfg: dict) -> list[Deal]:
