@@ -14,7 +14,7 @@ from pathlib import Path
 
 import yaml
 
-from . import http, notify
+from . import http, notify, verify
 from .matching import contains_any
 from .models import Deal
 from .sources import google_shopping, newsletter_mail, shopify
@@ -81,15 +81,44 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     focus_kw = (cfg.get("focus") or {}).get("keywords", [])
     for d in deals:
         d.extra["focus"] = bool(focus_kw) and contains_any(d.title, focus_kw)
+
+    # Marktplätze wie GOAT/StockX raus: deren Preis gilt nicht für eine bestimmte Größe
+    resellers = [d for d in deals if d.source.startswith("google:") and verify.is_reseller(d)]
+    deals = [d for d in deals if d not in resellers]
+    log.info("%d Marktplatz-Treffer (GOAT, StockX, …) verworfen", len(resellers))
+
     good = [d for d in deals if is_good_deal(d, cfg)]
     good.sort(key=lambda d: -(d.discount_percent or 0))
-    # Doppelte (gleicher Shop/Link/Größe) zusammenfassen
-    unique = list({d.key: d for d in good}.values())
-    log.info("%d Treffer insgesamt, %d gute Deals", len(deals), len(unique))
+    unique = list({d.key: d for d in good}.values())  # Doppelte zusammenfassen
+    log.info("%d Treffer insgesamt, %d Kandidaten", len(deals), len(unique))
+
     # Google-Links in direkte Shop-Links umwandeln – Kobe zuerst, dann nach Rabatt
     order = sorted(unique, key=lambda d: (not d.extra.get("focus"), -(d.discount_percent or 0)))
     google_shopping.resolve_links(order, state.setdefault("links", {}),
                                   int(gs.get("resolve_links_per_run", 6)))
+    unique = [d for d in unique if not verify.is_reseller(d)]  # Direktlink kann auf Marktplatz zeigen
+
+    # Exakten Preis in US 16 auf der Shop-Seite prüfen
+    checked = []
+    for d in unique:
+        if d.extra.get("club") or d.size_verified:
+            checked.append(d)
+            continue
+        res = verify.verify(d, cfg["size_aliases"])
+        log.info("  Prüfung %-28s %-9s %s", d.source[:28], res.status, res.how)
+        if res.status == "ok":
+            if res.old_price:
+                d.old_price = res.old_price
+            d.price, d.size, d.size_verified = res.price, res.size or "US 16", True
+            d.note = ""
+            if is_good_deal(d, cfg):  # Rabatt mit dem echten Größen-Preis neu prüfen
+                checked.append(d)
+        elif res.status == "unknown" and cfg.get("show_unverified", False):
+            d.extra["unverified"] = True
+            d.note = "Preis für US 16 nicht bestätigt – bitte im Shop prüfen."
+            checked.append(d)
+    unique = checked
+    log.info("%d Deals mit bestätigtem Preis in US 16", sum(d.size_verified for d in unique))
     return unique, select_new(unique, state)
 
 

@@ -27,6 +27,10 @@ focus:
     - mamba
   min_discount_percent: 20
 
+# Nur Schuhe melden, deren Preis für US 16 auf der Shop-Seite bestätigt wurde.
+# true = zusätzlich ungeprüfte Treffer anzeigen (mit Warnhinweis)
+show_unverified: false
+
 # Optional: Maximalpreis (in Shop-Währung). null = egal
 max_price: null
 

@@ -144,3 +144,57 @@ def test_store_link():
     assert store_link(data, "Basket4Ballers") == "https://www.basket4ballers.com/de/kobe"
     assert store_link(data, "Unbekannt") == "https://www.ebay.de/itm/1"
     assert store_link({}, "x") == ""
+
+
+class _Resp:
+    def __init__(self, ok=True, js=None, text="", status=200):
+        self.ok, self._js, self.text, self.status_code = ok, js, text, status
+
+    def json(self):
+        if self._js is None:
+            raise ValueError
+        return self._js
+
+
+def test_verify_shopify(monkeypatch):
+    from sneek import verify
+    from sneek.models import Deal
+    js = {"variants": [
+        {"option1": "15", "available": True, "price": 5000, "compare_at_price": 18000},
+        {"option1": "16", "available": True, "price": 9900, "compare_at_price": 18000},
+    ]}
+    monkeypatch.setattr(verify.requests, "get", lambda url, **k: _Resp(js=js) if url.endswith(".js") else _Resp(False))
+    d = Deal("google:Shop", "Nike Kobe 6", "https://shop.example/products/kobe-6?variant=1", 50, 180)
+    r = verify.verify(d, A)
+    assert (r.status, r.price, r.old_price) == ("ok", 99.0, 180.0)   # nicht 50 € der Größe 15!
+    js["variants"][1]["available"] = False
+    assert verify.verify(d, A).status == "sold_out"
+
+
+def test_verify_jsonld(monkeypatch):
+    import json as _j
+    from sneek import verify
+    from sneek.models import Deal
+    ld = {"@type": "ProductGroup", "name": "Nike LeBron 16", "hasVariant": [
+        {"@type": "Product", "size": "EU 45", "offers": {"price": "59.99", "availability": "https://schema.org/InStock"}},
+        {"@type": "Product", "size": "EU 47.5", "offers": {"price": "59.99", "availability": "https://schema.org/InStock"}},
+        {"@type": "Product", "size": "EU 49.5", "offers": {"price": "64.99", "availability": "https://schema.org/InStock"}},
+        {"@type": "Product", "size": "EU 50.5", "offers": {"price": "89.99", "availability": "https://schema.org/InStock"}},
+    ]}
+    html = f'<script type="application/ld+json">{_j.dumps(ld)}</script>'
+    monkeypatch.setattr(verify.requests, "get", lambda url, **k: _Resp(False) if url.endswith(".js") else _Resp(text=html))
+    d = Deal("google:Shop", "Nike LeBron 16", "https://shop.example/lebron-16.html", 59.99, 160)
+    r = verify.verify(d, A)
+    assert (r.status, r.price) == ("ok", 89.99)
+    ld["hasVariant"][3]["offers"]["availability"] = "https://schema.org/OutOfStock"
+    html2 = f'<script type="application/ld+json">{_j.dumps(ld)}</script>'
+    monkeypatch.setattr(verify.requests, "get", lambda url, **k: _Resp(False) if url.endswith(".js") else _Resp(text=html2))
+    assert verify.verify(d, A).status == "sold_out"
+
+
+def test_resellers_flagged():
+    from sneek.models import Deal
+    from sneek.verify import is_reseller
+    assert is_reseller(Deal("google:GOAT", "x", "https://www.google.com/x"))
+    assert is_reseller(Deal("google:Lyst.com DE", "x", "https://www.google.com/x"))
+    assert not is_reseller(Deal("google:BSTN Store", "x", "https://www.bstn.com/x"))

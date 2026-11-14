@@ -73,7 +73,8 @@ def _card(d: Deal, is_new: bool, img: str, weights: dict, accent: str) -> str:
     url = escape(d.url, quote=True)
     pct = d.discount_percent or d.extra.get("max_pct")
     pct_txt = (f"-{pct:.0f}%" if d.discount_percent else f"bis -{pct}%") if pct else ""
-    size_txt = "US 16 ✓ verfügbar" if d.size_verified else "Größe im Shop prüfen"
+    size_txt = ("Preis für US 16 bestätigt ✓" + (f" · {d.size}" if d.size and d.size != "US 16" else "")
+                if d.size_verified else "Größe im Shop prüfen")
     size_col = "#16a34a" if d.size_verified else "#b45309"
     badges = ""
     if is_new:
@@ -211,7 +212,7 @@ def build_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dic
                    "das die Kriterien erfüllt. Morgen wieder! 🙂</div>")
 
     foot = ("Bewertung 1–10 aus Rabatt, Preis, Modell, Größen-Sicherheit und Shop. "
-            "„US 16 ✓“ = im Shop als verfügbar bestätigt, sonst bitte selbst prüfen.")
+            "Preise sind direkt auf der Shop-Seite für US 16 geprüft (lieferbar). Marktplätze wie GOAT/StockX werden ignoriert.")
     if errors:
         foot += "<br><br>Nicht erreichbar: " + escape("; ".join(errors))
     out.append(f"<div style='font:500 11px/1.5 {FONT};color:#71717a;padding:24px 6px 8px;text-align:center'>{foot}</div>")
