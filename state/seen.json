@@ -1,7 +1,8 @@
 {
  "last_run": {
-  "google_shopping": 1794692547
+  "google_shopping": 1794692657
  },
+ "links": {},
  "seen": {
   "google:Basket4Ballers|https://www.google.com/search?ibp=oshop&q=Nike Kobe Gr\u00f6\u00dfe 50.5&prds=productid:13188072045086223264,headlineOfferDocid:13188072045086223264,imageDocid:16316524865817520319,rds:PC_10996573225458348396|PROD_PC_10996573225458348396,pvt:a&hl=de&gl=de&udm=28|": {
    "price": 142.8,
@@ -42,6 +43,38 @@
   "google:adidas.de|https://www.google.com/search?ibp=oshop&q=Basketballschuhe Herren Gr\u00f6\u00dfe 50.5 Sale&prds=catalogid:12745438404364691677,productid:2402137954386007705,headlineOfferDocid:10978562795926664228,imageDocid:18144309298017313647,rds:PC_8396590529579985806|PROD_PC_8396590529579985806,gpcid:8396590529579985806,mid:576462557387275631,pvt:a&hl=de&gl=de&udm=28|": {
    "price": 80.0,
    "ts": 1794692549
+  },
+  "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 44": {
+   "price": 142.8,
+   "ts": 1794692664
+  },
+  "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 45": {
+   "price": 142.8,
+   "ts": 1794692664
+  },
+  "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 45.5": {
+   "price": 142.8,
+   "ts": 1794692664
+  },
+  "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 47": {
+   "price": 142.8,
+   "ts": 1794692664
+  },
+  "google|GOAT|Nike Kobe Herren 8 Protro Lakers Home": {
+   "price": 100.99,
+   "ts": 1794692664
+  },
+  "google|Noirfonce DE|Nike Kobe Offcourt Herren": {
+   "price": 14.99,
+   "ts": 1794692664
+  },
+  "google|ResellZone Cesena|Nike Kobe 8 Protro What The": {
+   "price": 299.0,
+   "ts": 1794692664
+  },
+  "google|adidas.de|adidas Herren Harden Volume 10": {
+   "price": 80.0,
+   "ts": 1794692664
   }
  }
 }
