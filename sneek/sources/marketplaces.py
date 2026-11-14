@@ -6,7 +6,8 @@ Anders als bei Google Shopping kommt hier der exakte Preis je Größe:
 
 Vergleichspreis für den "Rabatt": UVP, falls bekannt (GOAT retail_prices),
 sonst der Durchschnittspreis des Modells über alle Größen (StockX avg_price).
-Braucht den Secret KICKSDB_API_KEY.  Doku: https://docs.kicks.dev
+Braucht den Secret KICKSDB_API_KEY (Key von pckt.sh).
+Doku: https://pckt.sh/docs/kdb/stockx/products (KicksDB-kompatibel)
 """
 from __future__ import annotations
 
@@ -20,12 +21,12 @@ from ..matching import is_basketball
 from ..models import Deal
 
 log = logging.getLogger(__name__)
-API = "https://api.kicks.dev/v3"
+API = "https://api.pckt.sh/v1/kdb"  # pckt.sh (Nachfolger von KicksDB), gleiches Format
 
 
-def _get(path: str, params: dict, key: str) -> list[dict]:
+def _get(path: str, params: dict, key: str, base: str = API) -> list[dict]:
     try:
-        r = requests.get(f"{API}{path}", params=params, timeout=20,
+        r = requests.get(f"{base}{path}", params=params, timeout=20,
                          headers={**HEADERS, "Accept": "application/json", "Authorization": f"Bearer {key}"})
     except requests.RequestException as e:
         ERRORS.append(f"KicksDB: {type(e).__name__}")
@@ -122,13 +123,13 @@ def search(cfg: dict) -> list[Deal]:
     for q in mcfg.get("queries", []):
         if "stockx" in mcfg.get("platforms", ["stockx", "goat"]):
             data = _get("/stockx/products", {"query": q, "limit": 20, "market": mcfg.get("stockx_market", "DE"),
-                                             "display[variants]": "true"}, key)
+                                             "display[variants]": "true"}, key, mcfg.get("api_base", API))
             found = stockx_deals(data, size, cfg)
             deals += found
             log.info("StockX '%s': %d Modelle, %d in US %s", q, len(data), len(found), size)
         if "goat" in mcfg.get("platforms", ["stockx", "goat"]):
             data = _get("/goat/products", {"query": q, "limit": 20, "market": mcfg.get("goat_market", "NL"),
-                                           "display[variants]": "true"}, key)
+                                           "display[variants]": "true"}, key, mcfg.get("api_base", API))
             found = goat_deals(data, size, cfg)
             deals += found
             log.info("GOAT '%s': %d Modelle, %d in US %s", q, len(data), len(found), size)

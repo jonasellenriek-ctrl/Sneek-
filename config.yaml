@@ -151,12 +151,15 @@ sources:
       - "basketball shoes size 16 sale"
       - "Nike Basketballschuh 50.5 reduziert"
 
-  # StockX & GOAT mit exaktem Preis für US 16 – über die KicksDB-API (kicks.dev).
-  # Braucht den Secret KICKSDB_API_KEY. Jede Suche = 1 Anfrage je Plattform.
+  # StockX mit exaktem Preis für US 16 – über pckt.sh (Nachfolger von KicksDB).
+  # Braucht den Secret KICKSDB_API_KEY. Gratis: 500 Credits/Monat,
+  # jede Suche kostet 0,6 Credits -> 10 Suchen/Tag ≈ 180 Credits/Monat.
+  # GOAT läuft bei pckt.sh über eine andere Schnittstelle (noch nicht eingebaut).
   marketplaces:
     enabled: true
+    api_base: "https://api.pckt.sh/v1/kdb"
     us_size: "16"
-    platforms: [stockx, goat]
+    platforms: [stockx]
     stockx_market: DE      # Preise in EUR für Deutschland
     goat_market: NL        # GOAT bietet EUR nur über NL
     # Rabatt gegenüber UVP bzw. Ø-Preis aller Größen
