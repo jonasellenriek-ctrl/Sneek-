@@ -67,8 +67,9 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
         deals += shopify.search(cfg)
     gs = sources.get("google_shopping", {})
     if gs.get("enabled") and due("google_shopping", gs.get("min_interval_hours", 12), state):
+        if http.env("SERPAPI_KEY"):  # nur als erledigt merken, wenn wirklich gesucht wurde
+            state["last_run"]["google_shopping"] = int(time.time())
         deals += google_shopping.search(cfg)
-        state["last_run"]["google_shopping"] = int(time.time())
     if sources.get("newsletter_mail", {}).get("enabled"):
         deals += newsletter_mail.search(cfg)
 
