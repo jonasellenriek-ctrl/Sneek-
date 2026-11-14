@@ -66,7 +66,9 @@ def search(cfg: dict) -> list[Deal]:
             imap.login(user, pw)
             imap.select("INBOX", readonly=True)
             for club in mcfg.get("clubs", []):
-                _, data = imap.search(None, "SINCE", since, "FROM", f'"{club["sender_contains"]}"')
+                # TEXT statt FROM: findet die Mails auch, wenn sie weitergeleitet wurden
+                # und der ursprüngliche Absender nur noch im Text steht
+                _, data = imap.search(None, "SINCE", since, "TEXT", f'"{club["sender_contains"]}"')
                 found = 0
                 for num in data[0].split():
                     _, raw = imap.fetch(num, "(BODY.PEEK[])")  # PEEK: Mail bleibt ungelesen
