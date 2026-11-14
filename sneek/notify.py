@@ -213,7 +213,7 @@ def build_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dic
                    "das die Kriterien erfüllt. Morgen wieder! 🙂</div>")
 
     foot = ("Bewertung 1–10 aus Rabatt, Preis, Modell, Größen-Sicherheit und Shop. "
-            "Preise sind direkt auf der Shop-Seite für US 16 geprüft (lieferbar). Marktplätze wie GOAT/StockX werden ignoriert.")
+            "Preise sind direkt auf der Shop-Seite für US 16 geprüft (lieferbar). StockX/GOAT: exakter Preis für US 16 laut KicksDB, zzgl. Plattform-Gebühren.")
     if errors:
         foot += "<br><br>Nicht erreichbar: " + escape("; ".join(errors))
     out.append(f"<div style='font:500 11px/1.5 {FONT};color:#71717a;padding:24px 6px 8px;text-align:center'>{foot}</div>")

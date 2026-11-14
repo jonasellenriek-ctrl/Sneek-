@@ -151,6 +151,28 @@ sources:
       - "basketball shoes size 16 sale"
       - "Nike Basketballschuh 50.5 reduziert"
 
+  # StockX & GOAT mit exaktem Preis für US 16 – über die KicksDB-API (kicks.dev).
+  # Braucht den Secret KICKSDB_API_KEY. Jede Suche = 1 Anfrage je Plattform.
+  marketplaces:
+    enabled: true
+    us_size: "16"
+    platforms: [stockx, goat]
+    stockx_market: DE      # Preise in EUR für Deutschland
+    goat_market: NL        # GOAT bietet EUR nur über NL
+    # Rabatt gegenüber UVP bzw. Ø-Preis aller Größen
+    min_discount_percent: 15
+    queries:
+      - "kobe 4 protro"
+      - "kobe 5 protro"
+      - "kobe 6 protro"
+      - "kobe 8 protro"
+      - "kobe 9"
+      - "kobe 11"
+      - "sabrina"
+      - "gt cut"
+      - "anthony edwards"
+      - "lebron"
+
   # Shopping-Clubs (Zalando Lounge, BestSecret): nur mit Login sichtbar, deshalb
   # wertet der Bot deren Newsletter in deinem Postfach aus (IMAP, z. B. GMX).
   # Braucht die Secrets IMAP_HOST, IMAP_USER, IMAP_PASSWORD.

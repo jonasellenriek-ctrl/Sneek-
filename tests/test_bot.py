@@ -198,3 +198,29 @@ def test_resellers_flagged():
     assert is_reseller(Deal("google:GOAT", "x", "https://www.google.com/x"))
     assert is_reseller(Deal("google:Lyst.com DE", "x", "https://www.google.com/x"))
     assert not is_reseller(Deal("google:BSTN Store", "x", "https://www.bstn.com/x"))
+
+
+def test_marketplaces_exact_size():
+    from sneek.sources import marketplaces as mp
+    stockx = [{"id": "a1", "title": "Nike Kobe 6 Protro Reverse Grinch", "model": "Nike Kobe 6", "category": "Nike Basketball",
+               "link": "https://stockx.com/kobe-6", "image": "https://img/x.jpg", "avg_price": 260,
+               "variants": [
+                   {"size": "15", "size_type": "us m", "lowest_ask": 150, "total_asks": 4},
+                   {"size": "16", "size_type": "us m", "lowest_ask": 189, "total_asks": 2},
+                   {"size": "16", "size_type": "us w", "lowest_ask": 90, "total_asks": 2},
+               ]}]
+    d = mp.stockx_deals(stockx, "16", CFG)
+    assert len(d) == 1 and d[0].price == 189 and d[0].old_price == 260 and d[0].size_verified
+
+    goat = [{"id": 7, "name": "Kobe 8 Protro 'Halo'", "brand": "Nike", "model": "Kobe 8", "link": "https://goat.com/k8",
+             "retail_prices": {"EUR": "190"},
+             "variants": [{"size": "10", "lowest_ask": 120, "available": True},
+                          {"size": "16", "lowest_ask": 140, "available": True},
+                          {"size": "16.5", "lowest_ask": 99, "available": True}]}]
+    g = mp.goat_deals(goat, "16", CFG)
+    assert len(g) == 1 and g[0].price == 140 and g[0].old_price == 190
+    goat[0]["variants"][1]["available"] = False
+    assert mp.goat_deals(goat, "16", CFG) == []
+
+    d[0].extra["min_pct"] = 15                         # 27 % unter Ø -> gut
+    assert is_good_deal(d[0], CFG)

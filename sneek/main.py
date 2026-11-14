@@ -17,7 +17,7 @@ import yaml
 from . import http, notify, verify
 from .matching import contains_any
 from .models import Deal
-from .sources import google_shopping, newsletter_mail, shopify
+from .sources import google_shopping, marketplaces, newsletter_mail, shopify
 
 ROOT = Path(__file__).resolve().parent.parent
 log = logging.getLogger("sneek")
@@ -35,7 +35,12 @@ def is_good_deal(d: Deal, cfg: dict) -> bool:
         return True  # Aktionen ohne Einzelpreis – Stichwortfilter reicht
     pct = d.discount_percent
     focus = cfg.get("focus") or {}
-    threshold = focus.get("min_discount_percent", 0) if d.extra.get("focus") else cfg["min_discount_percent"]
+    limits = [cfg["min_discount_percent"]]
+    if d.extra.get("focus"):
+        limits.append(focus.get("min_discount_percent", 0))
+    if d.extra.get("min_pct") is not None:  # z. B. StockX/GOAT
+        limits.append(d.extra["min_pct"])
+    threshold = min(limits)
     if pct is None or pct < threshold:
         return False
     if cfg.get("max_price") is not None and d.price is not None and d.price > cfg["max_price"]:
@@ -75,6 +80,8 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
         if http.env("SERPAPI_KEY"):  # nur als erledigt merken, wenn wirklich gesucht wurde
             state["last_run"]["google_shopping"] = int(time.time())
         deals += google_shopping.search(cfg)
+    if sources.get("marketplaces", {}).get("enabled"):
+        deals += marketplaces.search(cfg)
     if sources.get("newsletter_mail", {}).get("enabled"):
         deals += newsletter_mail.search(cfg)
 
@@ -85,7 +92,8 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     # Marktplätze wie GOAT/StockX raus: deren Preis gilt nicht für eine bestimmte Größe
     resellers = [d for d in deals if d.source.startswith("google:") and verify.is_reseller(d)]
     deals = [d for d in deals if d not in resellers]
-    log.info("%d Marktplatz-Treffer (GOAT, StockX, …) verworfen", len(resellers))
+    log.info("%d Google-Treffer von Marktplätzen verworfen (Preis gilt nicht für US 16; "
+             "StockX/GOAT kommen größengenau über KicksDB)", len(resellers))
 
     good = [d for d in deals if is_good_deal(d, cfg)]
     good.sort(key=lambda d: -(d.discount_percent or 0))
@@ -96,7 +104,8 @@ def run(cfg: dict, state: dict) -> tuple[list[Deal], list[Deal]]:
     order = sorted(unique, key=lambda d: (not d.extra.get("focus"), -(d.discount_percent or 0)))
     google_shopping.resolve_links(order, state.setdefault("links", {}),
                                   int(gs.get("resolve_links_per_run", 6)))
-    unique = [d for d in unique if not verify.is_reseller(d)]  # Direktlink kann auf Marktplatz zeigen
+    # Google-Treffer, deren Direktlink auf einen Marktplatz zeigt, ebenfalls raus
+    unique = [d for d in unique if not (d.source.startswith("google:") and verify.is_reseller(d))]
 
     # Exakten Preis in US 16 auf der Shop-Seite prüfen
     checked = []
