@@ -58,6 +58,8 @@ def select_new(deals: list[Deal], state: dict) -> list[Deal]:
 
 
 def due(name: str, hours: float, state: dict) -> bool:
+    if http.env("SNEEK_FORCE") == "true":  # manueller Testlauf
+        return True
     last = state.setdefault("last_run", {}).get(name, 0)
     return time.time() - last >= hours * 3600
 
