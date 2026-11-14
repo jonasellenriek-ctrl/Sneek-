@@ -92,12 +92,19 @@ def resolve_links(deals: list[Deal], cache: dict, limit: int) -> int:
         if d.key in cache:
             d.url = cache[d.key]
             continue
-        if not key or used >= limit or not d.extra.get("gtoken"):
+        if not key or used >= limit:
+            continue
+        if not d.extra.get("gtoken"):
+            log.info("Direktlink: kein Produkt-Token für %s (%s)", d.title, d.source)
             continue
         used += 1
         data = get_json(API, params={"engine": "google_immersive_product",
                                      "page_token": d.extra["gtoken"], "api_key": key})
         link = store_link(data, d.source.removeprefix("google:"))
+        if not link:
+            stores = ((data or {}).get("product_results") or {}).get("stores") or []
+            log.info("Direktlink: nichts gefunden für %s (Antwort: %s, %d Shops)",
+                     d.title, sorted((data or {}).keys())[:8], len(stores))
         if link:
             d.url = cache[d.key] = link
             log.info("Direktlink: %s -> %s", d.title, urlparse(link).netloc)

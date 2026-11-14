@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import smtplib
+import time
 from datetime import datetime
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
@@ -263,16 +264,20 @@ def send_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dict
         part.add_header("Content-Disposition", "inline", filename=cid.split("@")[0] + "." + sub)
         msg.attach(part)
 
-    try:
-        with smtplib.SMTP(host, int(env("SMTP_PORT") or 587), timeout=60) as s:
-            s.starttls()
-            s.login(user, pw)
-            s.send_message(msg)
-        log.info("Report an %s gesendet (%d Bilder eingebettet)", to, len(images))
-        return True
-    except (smtplib.SMTPException, OSError) as e:
-        log.error("Mail-Fehler: %s", e)
-        return False
+    for attempt in range(4):  # GMX drosselt manchmal kurz ("450 try again later")
+        try:
+            with smtplib.SMTP(host, int(env("SMTP_PORT") or 587), timeout=60) as s:
+                s.starttls()
+                s.login(user, pw)
+                s.send_message(msg)
+            log.info("Report an %s gesendet (%d Bilder eingebettet)", to, len(images))
+            return True
+        except (smtplib.SMTPException, OSError) as e:
+            log.warning("Mail-Fehler (Versuch %d/4): %s", attempt + 1, e)
+            if attempt < 3:
+                time.sleep(90 * (attempt + 1))
+    log.error("Report konnte nicht gesendet werden")
+    return False
 
 
 def telegram(deals: list[Deal]) -> None:
