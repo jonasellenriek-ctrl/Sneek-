@@ -155,7 +155,9 @@ def main() -> None:
         for d in deals:
             print("\n" + d.format())
         return
-    if deals or cfg.get("report", {}).get("send_empty", True):
+    if http.env("SNEEK_NO_MAIL") == "true":
+        log.info("E-Mail-Versand für diesen Lauf ausgeschaltet")
+    elif deals or cfg.get("report", {}).get("send_empty", True):
         notify.send_report(deals, new, http.ERRORS, cfg)
     notify.telegram(new)
     state_path.parent.mkdir(parents=True, exist_ok=True)

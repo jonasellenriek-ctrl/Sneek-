@@ -25,7 +25,7 @@ API = "https://api.kicks.dev/v3"
 
 def _get(path: str, params: dict, key: str) -> list[dict]:
     try:
-        r = requests.get(f"{API}{path}", params=params, timeout=30,
+        r = requests.get(f"{API}{path}", params=params, timeout=20,
                          headers={**HEADERS, "Accept": "application/json", "Authorization": f"Bearer {key}"})
     except requests.RequestException as e:
         ERRORS.append(f"KicksDB: {type(e).__name__}")

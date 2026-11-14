@@ -9,6 +9,10 @@ on:
         description: "Google-Suche erzwingen (auch wenn heute schon gesucht)"
         type: boolean
         default: true
+      mail:
+        description: "Report per E-Mail senden"
+        type: boolean
+        default: true
 
 permissions:
   contents: write             # um state/seen.json zu speichern
@@ -20,7 +24,7 @@ concurrency:
 jobs:
   search:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,6 +38,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SNEEK_FORCE: ${{ inputs.force }}
+          SNEEK_NO_MAIL: ${{ inputs.mail == false && 'true' || '' }}
           KICKSDB_API_KEY: ${{ secrets.KICKSDB_API_KEY }}
           IMAP_HOST: ${{ secrets.IMAP_HOST }}
           IMAP_USER: ${{ secrets.IMAP_USER }}
@@ -43,7 +48,15 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
-        run: python -m sneek.main
+        run: python -m sneek.main --preview report.html
+      - name: Report als Datei aufheben
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report
+          path: report.html
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Bereits gemeldete Deals speichern
         run: |
           git config user.name "sneek-bot"

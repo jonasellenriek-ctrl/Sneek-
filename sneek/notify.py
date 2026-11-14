@@ -221,12 +221,12 @@ def build_report(deals: list[Deal], new: list[Deal], errors: list[str], cfg: dic
     return subject, "".join(out)
 
 
-def _fetch_images(deals: list[Deal], limit: int = 60) -> dict[str, tuple[str, bytes, str]]:
+def _fetch_images(deals: list[Deal], limit: int = 30) -> dict[str, tuple[str, bytes, str]]:
     """Lädt Produktbilder für die Einbettung: key -> (cid, bytes, subtype)."""
     out: dict[str, tuple[str, bytes, str]] = {}
     for i, d in enumerate([d for d in deals if d.image][:limit]):
         try:
-            r = requests.get(d.image, headers=HEADERS, timeout=12)
+            r = requests.get(d.image, headers=HEADERS, timeout=8)
             ctype = r.headers.get("content-type", "")
             if r.ok and ctype.startswith("image/") and len(r.content) < 1_500_000:
                 out[d.key] = (f"img{i}@sneek", r.content, ctype.split("/")[1].split(";")[0])
