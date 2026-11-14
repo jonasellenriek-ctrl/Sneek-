@@ -33,6 +33,9 @@ def load_state(path: Path) -> dict:
 def is_good_deal(d: Deal, cfg: dict) -> bool:
     if d.extra.get("club"):
         return True  # Aktionen ohne Einzelpreis – Stichwortfilter reicht
+    cap = d.extra.get("max_ok_price")
+    if cap is not None and d.price is not None and d.price <= cap:
+        return True  # z. B. StockX: US 16 unter Preisgrenze
     pct = d.discount_percent
     focus = cfg.get("focus") or {}
     limits = [cfg["min_discount_percent"]]
