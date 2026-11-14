@@ -1,4 +1,15 @@
 {
- "last_run": {},
- "seen": {}
+ "last_run": {
+  "google_shopping": 1794691873
+ },
+ "seen": {
+  "google:Zalando|https://www.google.com/search?ibp=oshop&q=adidas Basketballschuh 51 1/3 reduziert&prds=catalogid:13483076932608671887,productid:16439253137996358806,headlineOfferDocid:2428103995959761681,imageDocid:10033687889835072666,rds:PC_14344164486154159401|PROD_PC_14344164486154159401,gpcid:14344164486154159401,mid:576462563925650154,pvt:a&hl=de&gl=de&udm=28|": {
+   "price": 65.95,
+   "ts": 1794691894
+  },
+  "google:adidas.de|https://www.google.com/search?ibp=oshop&q=Basketballschuhe Herren Gr\u00f6\u00dfe 50.5 Sale&prds=catalogid:12745438404364691677,productid:2402137954386007705,headlineOfferDocid:10978562795926664228,imageDocid:18144309298017313647,rds:PC_8396590529579985806|PROD_PC_8396590529579985806,gpcid:8396590529579985806,mid:576462557387275631,pvt:a&hl=de&gl=de&udm=28|": {
+   "price": 80.0,
+   "ts": 1794691894
+  }
+ }
 }
