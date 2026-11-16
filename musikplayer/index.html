@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<title>Welle – dein Musikplayer</title>
+<style>
+:root{
+  --bg:#14110f; --panel:#1d1916; --panel2:#272220; --line:#3a3330;
+  --text:#f3ece6; --muted:#a39890; --accent:#ff7a45; --accent-ink:#1a0d06; --danger:#ff5c5c;
+  --bar-h:84px; --tabs-h:0px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:grid;grid-template-columns:264px 1fr;grid-template-rows:1fr var(--bar-h);overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;border-radius:8px}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=search],input[type=password]{font:inherit;color:var(--text);background:var(--panel2);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+h1{font-size:26px;margin:0 0 14px;letter-spacing:-.02em}
+h2{font-size:16px;margin:22px 0 8px;color:var(--muted);font-weight:600}
+p{margin:0 0 10px}
+a{color:var(--accent)}
+.muted{color:var(--muted)}
+
+/* Seitenleiste */
+aside{background:var(--panel);border-right:1px solid var(--line);padding:16px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.logo{font-weight:800;font-size:22px;letter-spacing:-.03em;margin:2px 6px 14px}
+.logo span{color:var(--accent)}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{text-align:left;padding:10px 12px;color:var(--muted);font-weight:600;display:flex;gap:10px;align-items:center}
+nav button:hover{color:var(--text);background:var(--panel2)}
+nav button.on{color:var(--text);background:var(--panel2)}
+nav .count{margin-left:auto;font-size:12px;font-weight:500;color:var(--muted)}
+#videoBox{margin-top:auto;width:232px;height:200px;border-radius:12px;overflow:hidden;background:#000;flex:none}
+#videoBox iframe{width:100%;height:100%;display:block}
+
+/* Hauptbereich */
+main{overflow-y:auto;padding:26px 28px 40px;min-width:0}
+.view{display:none;max-width:860px}
+.view.on{display:block}
+.row{display:flex;gap:8px;align-items:center}
+.searchrow{position:sticky;top:-26px;background:var(--bg);padding:8px 0 12px;z-index:2}
+.btn{background:var(--accent);color:var(--accent-ink);font-weight:700;padding:10px 16px;white-space:nowrap}
+.btn.ghost{background:var(--panel2);color:var(--text);font-weight:600}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn.danger{background:none;color:var(--danger);font-weight:600}
+
+/* Titelliste */
+.list{list-style:none;margin:0;padding:0}
+.track{display:grid;grid-template-columns:auto 56px 1fr auto;gap:12px;align-items:center;padding:7px 8px;border-radius:10px}
+.track:hover{background:var(--panel)}
+.track.now{background:var(--panel2)}
+.track.now .t-title{color:var(--accent)}
+.track.dragover{box-shadow:0 -2px 0 var(--accent)}
+.num{width:22px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
+.thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;background:var(--panel2);display:block}
+.t-main{min-width:0;text-align:left;padding:2px 0;border-radius:6px}
+.t-title,.t-artist{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t-title{font-weight:600}
+.t-artist{color:var(--muted);font-size:13px}
+.acts{display:flex;gap:2px}
+.acts button{width:34px;height:34px;color:var(--muted);font-size:16px;display:grid;place-items:center}
+.acts button:hover{color:var(--text);background:var(--line)}
+.acts button:disabled{opacity:.25;cursor:default;background:none}
+.empty{color:var(--muted);padding:26px 8px;border:1px dashed var(--line);border-radius:12px;text-align:center}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left;display:block;width:100%}
+.card:hover{background:var(--panel2)}
+.card b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notice{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
+.notice ol{margin:8px 0 0;padding-left:20px}
+.notice li{margin:4px 0}
+.err{color:var(--danger)}
+
+/* Player-Leiste */
+footer{grid-column:1/-1;background:var(--panel);border-top:1px solid var(--line);display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:16px;padding:0 18px}
+.np{display:flex;gap:12px;align-items:center;min-width:0}
+.np img{width:64px;height:48px;border-radius:8px;object-fit:cover;background:var(--panel2);flex:none}
+.np div{min-width:0}
+.center{display:flex;flex-direction:column;gap:4px;align-items:center}
+.ctrl{display:flex;gap:6px;align-items:center}
+.ctrl button{width:40px;height:40px;font-size:18px;display:grid;place-items:center;color:var(--muted)}
+.ctrl button:hover{color:var(--text)}
+.ctrl button.on{color:var(--accent)}
+.ctrl #bPlay{background:var(--text);color:var(--bg);border-radius:50%;width:44px;height:44px;font-size:17px}
+.seek{display:flex;gap:8px;align-items:center;width:100%;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{flex:1;accent-color:var(--accent);height:4px;min-width:0}
+.right{display:flex;gap:8px;align-items:center;justify-content:flex-end;color:var(--muted)}
+.right input{max-width:120px}
+
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:20px;width:min(380px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h3{margin:0 0 12px}
+dialog .list button{width:100%;text-align:left;padding:10px 12px}
+dialog .list button:hover{background:var(--panel2)}
+#toast{position:fixed;left:50%;bottom:calc(var(--bar-h) + var(--tabs-h) + 14px);transform:translateX(-50%);background:var(--text);color:var(--bg);
+  padding:8px 14px;border-radius:999px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90vw}
+#toast.show{opacity:1}
+
+/* Handy */
+@media (max-width:760px){
+  :root{--bar-h:112px;--tabs-h:56px}
+  body{grid-template-columns:1fr;grid-template-rows:auto 1fr var(--bar-h) var(--tabs-h)}
+  aside{display:contents}
+  .logo{display:none}
+  #videoBox{grid-row:1;width:100%;height:200px;border-radius:0;margin:0}
+  main{grid-row:2;padding:14px 16px 30px}
+  .searchrow{top:-14px}
+  footer{grid-row:3;grid-template-columns:1fr;gap:4px;padding:8px 14px}
+  .np img,.right{display:none}
+  .np{justify-content:center;text-align:center}
+  .np .t-artist{display:none}
+  nav{grid-row:4;flex-direction:row;background:var(--panel);border-top:1px solid var(--line);padding:4px}
+  nav button{flex:1;flex-direction:column;gap:0;font-size:11px;padding:6px 2px;align-items:center}
+  nav button .ico{font-size:18px}
+  nav .count{display:none}
+  .track{grid-template-columns:44px 1fr auto;gap:10px}
+  .num{display:none}
+  .thumb{width:44px;height:33px}
+  .acts button{width:30px}
+  h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="logo">Welle<span>.</span></div>
+  <nav id="nav">
+    <button data-view="search"><span class="ico">🔍</span>Suche</button>
+    <button data-view="queue"><span class="ico">📜</span>Warteschlange<span class="count" id="qCount"></span></button>
+    <button data-view="lists"><span class="ico">🎵</span>Playlists</button>
+    <button data-view="settings"><span class="ico">⚙️</span>Einstellungen</button>
+  </nav>
+  <div id="videoBox"><div id="yt"></div></div>
+</aside>
+
+<main>
+  <section class="view" id="v-search">
+    <h1>Suche</h1>
+    <form class="row searchrow" id="searchForm">
+      <input type="search" id="q" placeholder="Song, Künstler oder YouTube-Link einfügen" autocomplete="off">
+      <button class="btn">Suchen</button>
+    </form>
+    <div id="searchMsg"></div>
+    <ul class="list" id="results"></ul>
+  </section>
+
+  <section class="view" id="v-queue">
+    <h1>Warteschlange</h1>
+    <div class="row" style="margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn ghost small" id="bShuffleQ">🔀 Rest mischen</button>
+      <button class="btn ghost small" id="bSaveQ">💾 Als Playlist speichern</button>
+      <button class="btn danger small" id="bClearQ">Leeren</button>
+    </div>
+    <p class="muted" style="font-size:13px">Reihenfolge ändern: Zeile ziehen oder die Pfeile benutzen.</p>
+    <ul class="list" id="queue"></ul>
+  </section>
+
+  <section class="view" id="v-lists">
+    <div id="listsHome">
+      <h1>Playlists</h1>
+      <form class="row" id="newListForm" style="margin-bottom:16px">
+        <input type="text" id="newListName" placeholder="Name der neuen Playlist" maxlength="60">
+        <button class="btn">Erstellen</button>
+      </form>
+      <div class="cards" id="cards"></div>
+    </div>
+    <div id="listDetail" hidden>
+      <button class="btn ghost small" id="bBack">← Alle Playlists</button>
+      <h1 id="ldName" style="margin-top:14px"></h1>
+      <div class="row" style="margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn small" id="bPlayList">▶ Abspielen</button>
+        <button class="btn ghost small" id="bQueueList">＋ An Warteschlange</button>
+        <button class="btn ghost small" id="bRenameList">Umbenennen</button>
+        <button class="btn danger small" id="bDelList">Löschen</button>
+      </div>
+      <ul class="list" id="ldTracks"></ul>
+    </div>
+  </section>
+
+  <section class="view" id="v-settings">
+    <h1>Einstellungen</h1>
+    <h2>YouTube-API-Schlüssel (für die Suche)</h2>
+    <form class="row" id="keyForm">
+      <input type="password" id="apiKey" placeholder="AIza…" autocomplete="off">
+      <button class="btn">Speichern</button>
+    </form>
+    <div class="notice">
+      <b>So bekommst du den kostenlosen Schlüssel (ca. 5 Minuten):</b>
+      <ol>
+        <li>Öffne <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> und melde dich mit einem Google-Konto an.</li>
+        <li>Lege oben ein neues Projekt an.</li>
+        <li>Gehe zu „APIs &amp; Dienste → Bibliothek“, suche „YouTube Data API v3“ und klicke auf „Aktivieren“.</li>
+        <li>Gehe zu „APIs &amp; Dienste → Anmeldedaten → Anmeldedaten erstellen → API-Schlüssel“.</li>
+        <li>Kopiere den Schlüssel und füge ihn oben ein.</li>
+      </ol>
+      <p class="muted" style="margin-top:10px">Der Schlüssel bleibt nur in diesem Browser gespeichert. Er reicht für etwa 100 Suchen pro Tag. Ohne Schlüssel kannst du trotzdem YouTube-Links in die Suche einfügen.</p>
+    </div>
+    <h2>Daten</h2>
+    <div class="row" style="flex-wrap:wrap">
+      <button class="btn ghost" id="bExport">Playlists exportieren</button>
+      <button class="btn ghost" id="bImport">Playlists importieren</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <h2>Hinweise</h2>
+    <p class="muted">Die Musik läuft über den offiziellen YouTube-Player. Deshalb bleibt das Videofenster sichtbar, und ob Werbung eingeblendet wird, entscheidet YouTube. Manche Videos erlauben kein Abspielen außerhalb von YouTube und werden automatisch übersprungen.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="np">
+    <img id="npImg" alt="" hidden>
+    <div><span class="t-title" id="npTitle">Nichts ausgewählt</span><span class="t-artist" id="npArtist">Such dir einen Song aus</span></div>
+  </div>
+  <div class="center">
+    <div class="ctrl">
+      <button id="bShuffle" title="Rest der Warteschlange mischen" aria-label="Mischen">🔀</button>
+      <button id="bPrev" title="Zurück" aria-label="Zurück">⏮</button>
+      <button id="bPlay" title="Abspielen / Pause" aria-label="Abspielen oder Pause">▶</button>
+      <button id="bNext" title="Weiter" aria-label="Weiter">⏭</button>
+      <button id="bRepeat" title="Wiederholen: aus" aria-label="Wiederholen">🔁</button>
+    </div>
+    <div class="seek"><span id="tCur">0:00</span><input type="range" id="seek" min="0" max="1000" value="0" aria-label="Position"><span id="tDur">0:00</span></div>
+  </div>
+  <div class="right">🔊 <input type="range" id="vol" min="0" max="100" aria-label="Lautstärke"></div>
+</footer>
+
+<dialog id="dlg">
+  <h3>Zu Playlist hinzufügen</h3>
+  <ul class="list" id="dlgLists"></ul>
+  <form class="row" id="dlgNew" style="margin-top:10px">
+    <input type="text" id="dlgName" placeholder="Neue Playlist" maxlength="60">
+    <button class="btn small">Erstellen</button>
+  </form>
+  <div style="text-align:right;margin-top:12px"><button class="btn ghost small" id="dlgClose">Schließen</button></div>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+'use strict';
+const $ = (s) => document.querySelector(s);
+const STORE = 'welle.v1';
+const API = 'https://www.googleapis.com/youtube/v3/';
+
+const state = Object.assign(
+  { key: '', queue: [], idx: -1, lists: [], repeat: 'off', volume: 80, view: 'search' },
+  (() => { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; } })()
+);
+let openList = null;      // id der geöffneten Playlist
+let results = [];         // letzte Suchergebnisse
+let pendingTracks = [];   // Titel für den „Zu Playlist“-Dialog
+let player = null, ready = false, playing = false, seeking = false, errorStreak = 0;
+
+function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {} }
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+const thumb = (id) => `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+const fmt = (s) => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const decode = (s) => { const t = document.createElement('textarea'); t.innerHTML = s; return t.value; };
+const copy = (t) => ({ id: t.id, title: t.title, artist: t.artist });
+function el(tag, props = {}, ...kids) {
+  const e = Object.assign(document.createElement(tag), props);
+  for (const k of kids) e.append(k);
+  return e;
+}
+
+/* ---------- Wiedergabe ---------- */
+window.onYouTubeIframeAPIReady = () => {
+  player = new YT.Player('yt', {
+    width: '100%', height: '100%',
+    playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+    events: {
+      onReady: () => {
+        ready = true; player.setVolume(state.volume);
+        const t = state.queue[state.idx];
+        if (t) player.cueVideoById(t.id);
+      },
+      onStateChange: (e) => {
+        playing = e.data === YT.PlayerState.PLAYING;
+        $('#bPlay').textContent = playing ? '⏸' : '▶';
+        if (playing) { errorStreak = 0; fillMissingTitle(); }
+        if (e.data === YT.PlayerState.ENDED) next(true);
+      },
+      onError: () => {
+        // z. B. Video gesperrt oder Einbetten nicht erlaubt: überspringen
+        errorStreak++;
+        if (errorStreak <= 5 && state.idx < state.queue.length - 1) { toast('Nicht abspielbar – übersprungen'); next(true); }
+        else toast('Dieses Video lässt sich hier nicht abspielen');
+      }
+    }
+  });
+};
+
+function fillMissingTitle() {
+  const t = state.queue[state.idx];
+  if (!t || !t.placeholder || !player.getVideoData) return;
+  const d = player.getVideoData();
+  if (d && d.title) { t.title = d.title; t.artist = d.author || ''; delete t.placeholder; save(); renderAll(); }
+}
+
+function playAt(i) {
+  if (i < 0 || i >= state.queue.length) return;
+  state.idx = i; save(); renderAll();
+  if (ready) player.loadVideoById(state.queue[i].id);
+  else toast('Der YouTube-Player lädt noch …');
+}
+function next(auto) {
+  if (!state.queue.length) return;
+  if (auto && state.repeat === 'one') return playAt(state.idx);
+  if (state.idx < state.queue.length - 1) return playAt(state.idx + 1);
+  if (state.repeat !== 'off' || !auto) return playAt(0);
+}
+function prev() {
+  if (!state.queue.length) return;
+  if (ready && player.getCurrentTime() > 3) return player.seekTo(0, true);
+  playAt(state.idx > 0 ? state.idx - 1 : 0);
+}
+function toggle() {
+  if (!ready) return;
+  if (state.idx < 0 && state.queue.length) return playAt(0);
+  playing ? player.pauseVideo() : player.playVideo();
+}
+
+/* ---------- Warteschlange ---------- */
+function playNow(t) { state.queue.splice(state.idx + 1, 0, copy(t)); playAt(state.idx + 1); }
+function playNext(t) { state.queue.splice(state.idx + 1, 0, copy(t)); save(); renderAll(); toast('Wird als Nächstes gespielt'); }
+function enqueue(ts) {
+  const wasEmpty = !state.queue.length;
+  state.queue.push(...ts.map(copy)); save(); renderAll();
+  toast(ts.length > 1 ? ts.length + ' Titel zur Warteschlange hinzugefügt' : 'Zur Warteschlange hinzugefügt');
+  if (wasEmpty) playAt(0);
+}
+function move(arr, from, to) {
+  if (to < 0 || to >= arr.length || from === to) return;
+  const [x] = arr.splice(from, 1); arr.splice(to, 0, x);
+  if (arr === state.queue) {
+    if (state.idx === from) state.idx = to;
+    else if (from < state.idx && to >= state.idx) state.idx--;
+    else if (from > state.idx && to <= state.idx) state.idx++;
+  }
+  save(); renderAll();
+}
+function removeFromQueue(i) {
+  const wasCurrent = i === state.idx;
+  state.queue.splice(i, 1);
+  if (i < state.idx) state.idx--;
+  if (wasCurrent) {
+    if (state.idx >= state.queue.length) { state.idx = -1; if (ready) player.stopVideo(); save(); renderAll(); }
+    else return playAt(state.idx);
+  }
+  save(); renderAll();
+}
+function shuffleRest() {
+  const rest = state.queue.splice(state.idx + 1);
+  for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }
+  state.queue.push(...rest); save(); renderAll();
+  toast(rest.length ? 'Kommende Titel gemischt' : 'Nichts zum Mischen');
+}
+
+/* ---------- Playlists ---------- */
+const getList = (id) => state.lists.find((l) => l.id === id);
+function createList(name, tracks = []) {
+  const l = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name.trim() || 'Neue Playlist', tracks: tracks.map(copy) };
+  state.lists.push(l); save(); renderAll(); return l;
+}
+function addToList(l, ts) {
+  const have = new Set(l.tracks.map((t) => t.id));
+  const fresh = ts.filter((t) => !have.has(t.id));
+  l.tracks.push(...fresh.map(copy)); save(); renderAll();
+  toast(fresh.length ? `Zu „${l.name}“ hinzugefügt` : `Schon in „${l.name}“`);
+}
+function openDialog(ts) {
+  pendingTracks = ts;
+  const ul = $('#dlgLists'); ul.replaceChildren();
+  if (!state.lists.length) ul.append(el('li', { className: 'muted', textContent: 'Noch keine Playlists vorhanden.' }));
+  for (const l of state.lists) {
+    const b = el('button', { textContent: `${l.name} (${l.tracks.length})` });
+    b.onclick = () => { addToList(l, pendingTracks); $('#dlg').close(); };
+    ul.append(el('li', {}, b));
+  }
+  $('#dlg').showModal();
+}
+
+/* ---------- Darstellung ---------- */
+function trackRow(t, i, opts) {
+  const li = el('li', { className: 'track' + (opts.now ? ' now' : '') });
+  const img = el('img', { className: 'thumb', src: thumb(t.id), alt: '', loading: 'lazy' });
+  const main = el('button', { className: 't-main', title: 'Abspielen' },
+    el('span', { className: 't-title', textContent: t.title }),
+    el('span', { className: 't-artist', textContent: t.artist || '' }));
+  main.onclick = opts.onPlay;
+  const acts = el('div', { className: 'acts' });
+  for (const [icon, label, fn, disabled] of opts.actions) {
+    const b = el('button', { textContent: icon, title: label, disabled: !!disabled });
+    b.setAttribute('aria-label', label); b.onclick = fn; acts.append(b);
+  }
+  li.append(el('span', { className: 'num', textContent: i + 1 }), img, main, acts);
+  if (opts.onDrop) {
+    li.draggable = true;
+    li.ondragstart = (e) => { e.dataTransfer.setData('text/plain', String(i)); e.dataTransfer.effectAllowed = 'move'; };
+    li.ondragover = (e) => { e.preventDefault(); li.classList.add('dragover'); };
+    li.ondragleave = () => li.classList.remove('dragover');
+    li.ondrop = (e) => { e.preventDefault(); li.classList.remove('dragover'); const from = Number(e.dataTransfer.getData('text/plain')); if (!Number.isNaN(from)) opts.onDrop(from, i); };
+  }
+  return li;
+}
+const empty = (text) => el('li', { className: 'empty', textContent: text });
+
+function renderResults() {
+  const ul = $('#results'); ul.replaceChildren();
+  results.forEach((t, i) => ul.append(trackRow(t, i, {
+    onPlay: () => playNow(t),
+    actions: [
+      ['⏭', 'Als Nächstes spielen', () => playNext(t)],
+      ['＋', 'Ans Ende der Warteschlange', () => enqueue([t])],
+      ['♥', 'Zu Playlist hinzufügen', () => openDialog([t])]
+    ]
+  })));
+}
+function renderQueue() {
+  const ul = $('#queue'); ul.replaceChildren();
+  const q = state.queue;
+  $('#qCount').textContent = q.length || '';
+  if (!q.length) return ul.append(empty('Die Warteschlange ist leer. Füge über die Suche oder eine Playlist Songs hinzu.'));
+  q.forEach((t, i) => ul.append(trackRow(t, i, {
+    now: i === state.idx,
+    onPlay: () => playAt(i),
+    onDrop: (from, to) => move(q, from, to),
+    actions: [
+      ['↑', 'Nach oben', () => move(q, i, i - 1), i === 0],
+      ['↓', 'Nach unten', () => move(q, i, i + 1), i === q.length - 1],
+      ['♥', 'Zu Playlist hinzufügen', () => openDialog([t])],
+      ['✕', 'Entfernen', () => removeFromQueue(i)]
+    ]
+  })));
+}
+function renderLists() {
+  const l = openList && getList(openList);
+  $('#listsHome').hidden = !!l; $('#listDetail').hidden = !l;
+  if (!l) {
+    const c = $('#cards'); c.replaceChildren();
+    if (!state.lists.length) c.append(el('div', { className: 'empty', textContent: 'Noch keine Playlists. Lege oben deine erste an.' }));
+    for (const p of state.lists) {
+      const b = el('button', { className: 'card' }, el('b', { textContent: p.name }), el('span', { className: 'muted', textContent: p.tracks.length + ' Titel' }));
+      b.onclick = () => { openList = p.id; renderLists(); };
+      c.append(b);
+    }
+    return;
+  }
+  $('#ldName').textContent = l.name;
+  const ul = $('#ldTracks'); ul.replaceChildren();
+  if (!l.tracks.length) return ul.append(empty('Diese Playlist ist leer. Füge Songs über das ♥ in der Suche hinzu.'));
+  l.tracks.forEach((t, i) => ul.append(trackRow(t, i, {
+    onPlay: () => { state.queue = l.tracks.map(copy); playAt(i); },
+    onDrop: (from, to) => move(l.tracks, from, to),
+    actions: [
+      ['↑', 'Nach oben', () => move(l.tracks, i, i - 1), i === 0],
+      ['↓', 'Nach unten', () => move(l.tracks, i, i + 1), i === l.tracks.length - 1],
+      ['＋', 'Ans Ende der Warteschlange', () => enqueue([t])],
+      ['✕', 'Aus Playlist entfernen', () => { l.tracks.splice(i, 1); save(); renderAll(); }]
+    ]
+  })));
+}
+function renderNow() {
+  const t = state.queue[state.idx];
+  $('#npTitle').textContent = t ? t.title : 'Nichts ausgewählt';
+  $('#npArtist').textContent = t ? (t.artist || '') : 'Such dir einen Song aus';
+  $('#npImg').hidden = !t; if (t) $('#npImg').src = thumb(t.id);
+  document.title = t ? t.title + ' – Welle' : 'Welle – dein Musikplayer';
+  const r = $('#bRepeat');
+  r.classList.toggle('on', state.repeat !== 'off');
+  r.textContent = state.repeat === 'one' ? '🔂' : '🔁';
+  r.title = 'Wiederholen: ' + { off: 'aus', all: 'Warteschlange', one: 'dieser Titel' }[state.repeat];
+  if ('mediaSession' in navigator && t) {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.artist || '', artwork: [{ src: thumb(t.id), sizes: '320x180', type: 'image/jpeg' }] });
+  }
+}
+function renderAll() { renderResults(); renderQueue(); renderLists(); renderNow(); }
+function show(view) {
+  state.view = view; save();
+  document.querySelectorAll('.view').forEach((v) => v.classList.toggle('on', v.id === 'v-' + view));
+  document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('on', b.dataset.view === view));
+  if (view === 'lists') { openList = null; renderLists(); }
+}
+
+/* ---------- Suche ---------- */
+function parseLink(s) {
+  let u; try { u = new URL(s.trim()); } catch { return null; }
+  if (!/(^|\.)youtube\.com$|(^|\.)youtu\.be$/.test(u.hostname)) return null;
+  const list = u.searchParams.get('list');
+  let v = u.searchParams.get('v');
+  if (!v && u.hostname.endsWith('youtu.be')) v = u.pathname.slice(1);
+  if (!v) { const m = u.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]{11})/); if (m) v = m[1]; }
+  if (v && !/^[\w-]{11}$/.test(v)) v = null;
+  return (v || list) ? { v, list } : null;
+}
+async function api(path, params) {
+  const r = await fetch(API + path + '?' + new URLSearchParams({ ...params, key: state.key }));
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const reason = j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason;
+    if (reason === 'quotaExceeded') throw new Error('Das Tageslimit deines API-Schlüssels ist erreicht. Morgen geht es weiter.');
+    if (r.status === 400 || r.status === 403) throw new Error('Der API-Schlüssel wurde abgelehnt. Prüfe ihn in den Einstellungen.');
+    throw new Error('YouTube hat nicht geantwortet (Fehler ' + r.status + ').');
+  }
+  return j;
+}
+const fromSnippet = (id, s) => ({ id, title: decode(s.title), artist: decode(s.videoOwnerChannelTitle || s.channelTitle || '').replace(/ - Topic$/, '') });
+
+function msg(text, isErr) {
+  const m = $('#searchMsg'); m.replaceChildren();
+  if (text) m.append(el('p', { className: isErr ? 'err' : 'muted', textContent: text }));
+}
+function needKey() {
+  const m = $('#searchMsg'); m.replaceChildren();
+  const b = el('button', { className: 'btn small', textContent: 'Zu den Einstellungen' });
+  b.onclick = () => show('settings');
+  m.append(el('div', { className: 'notice' },
+    el('p', { textContent: 'Für die Suche brauchst du einmalig einen kostenlosen YouTube-API-Schlüssel. Ohne Schlüssel kannst du hier trotzdem einen YouTube-Link einfügen.' }), b));
+}
+async function search(text) {
+  text = text.trim(); if (!text) return;
+  const link = parseLink(text);
+  try {
+    if (link && link.list && state.key) {
+      msg('Playlist wird geladen …');
+      const tracks = []; let pageToken = '';
+      do {
+        const j = await api('playlistItems', { part: 'snippet', maxResults: 50, playlistId: link.list, ...(pageToken && { pageToken }) });
+        for (const it of j.items || []) {
+          const s = it.snippet;
+          if (s.title !== 'Private video' && s.title !== 'Deleted video') tracks.push(fromSnippet(s.resourceId.videoId, s));
+        }
+        pageToken = j.nextPageToken || '';
+      } while (pageToken && tracks.length < 500);
+      results = tracks; renderResults();
+      const m = $('#searchMsg'); m.replaceChildren();
+      const b = el('button', { className: 'btn small', textContent: `Alle ${tracks.length} Titel als Playlist speichern` });
+      b.onclick = () => { const l = createList('Importierte Playlist', tracks); show('lists'); openList = l.id; renderLists(); };
+      m.append(el('p', {}, b));
+      return;
+    }
+    if (link && link.v) {
+      let t = { id: link.v, title: 'YouTube-Video', artist: 'Titel erscheint beim Abspielen', placeholder: true };
+      if (state.key) {
+        const j = await api('videos', { part: 'snippet', id: link.v });
+        if (j.items && j.items[0]) t = fromSnippet(link.v, j.items[0].snippet);
+      }
+      results = [t]; renderResults(); msg('');
+      return;
+    }
+    if (!state.key) return needKey();
+    msg('Suche läuft …');
+    const j = await api('search', { part: 'snippet', type: 'video', videoEmbeddable: 'true', videoCategoryId: '10', maxResults: 25, q: text });
+    results = (j.items || []).map((it) => fromSnippet(it.id.videoId, it.snippet));
+    renderResults();
+    msg(results.length ? '' : 'Nichts gefunden.');
+  } catch (e) {
+    msg(e instanceof TypeError ? 'Keine Verbindung zu YouTube. Prüfe deine Internetverbindung.' : e.message, true);
+  }
+}
+
+/* ---------- Bedienung ---------- */
+$('#nav').onclick = (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.view); };
+$('#searchForm').onsubmit = (e) => { e.preventDefault(); search($('#q').value); };
+$('#bPlay').onclick = toggle; $('#bNext').onclick = () => next(false); $('#bPrev').onclick = prev;
+$('#bShuffle').onclick = shuffleRest; $('#bShuffleQ').onclick = shuffleRest;
+$('#bRepeat').onclick = () => { state.repeat = { off: 'all', all: 'one', one: 'off' }[state.repeat]; save(); renderNow(); };
+$('#bClearQ').onclick = () => {
+  if (!state.queue.length || !confirm('Warteschlange wirklich leeren?')) return;
+  state.queue = []; state.idx = -1; if (ready) player.stopVideo(); save(); renderAll();
+};
+$('#bSaveQ').onclick = () => {
+  if (!state.queue.length) return toast('Die Warteschlange ist leer');
+  const name = prompt('Name der Playlist:', 'Meine Warteschlange'); if (name === null) return;
+  createList(name, state.queue); toast('Playlist gespeichert');
+};
+$('#vol').value = state.volume;
+$('#vol').oninput = (e) => { state.volume = Number(e.target.value); if (ready) player.setVolume(state.volume); save(); };
+$('#seek').oninput = () => { seeking = true; };
+$('#seek').onchange = (e) => { if (ready) player.seekTo(player.getDuration() * e.target.value / 1000, true); seeking = false; };
+setInterval(() => {
+  if (!ready || !player.getDuration) return;
+  const d = player.getDuration() || 0, c = player.getCurrentTime() || 0;
+  $('#tCur').textContent = fmt(c); $('#tDur').textContent = fmt(d);
+  if (!seeking) $('#seek').value = d ? Math.round(c / d * 1000) : 0;
+}, 500);
+
+$('#newListForm').onsubmit = (e) => { e.preventDefault(); const n = $('#newListName'); if (!n.value.trim()) return; createList(n.value); n.value = ''; };
+$('#bBack').onclick = () => { openList = null; renderLists(); };
+$('#bPlayList').onclick = () => { const l = getList(openList); if (!l.tracks.length) return toast('Die Playlist ist leer'); state.queue = l.tracks.map(copy); playAt(0); };
+$('#bQueueList').onclick = () => { const l = getList(openList); if (l.tracks.length) enqueue(l.tracks); };
+$('#bRenameList').onclick = () => { const l = getList(openList); const n = prompt('Neuer Name:', l.name); if (n && n.trim()) { l.name = n.trim(); save(); renderLists(); } };
+$('#bDelList').onclick = () => {
+  const l = getList(openList);
+  if (!confirm(`Playlist „${l.name}“ wirklich löschen?`)) return;
+  state.lists = state.lists.filter((x) => x !== l); openList = null; save(); renderAll();
+};
+$('#dlgClose').onclick = () => $('#dlg').close();
+$('#dlgNew').onsubmit = (e) => { e.preventDefault(); const n = $('#dlgName'); if (!n.value.trim()) return; addToList(createList(n.value), pendingTracks); n.value = ''; $('#dlg').close(); };
+
+$('#apiKey').value = state.key;
+$('#keyForm').onsubmit = (e) => { e.preventDefault(); state.key = $('#apiKey').value.trim(); save(); toast(state.key ? 'Schlüssel gespeichert' : 'Schlüssel entfernt'); if (state.key) { msg(''); show('search'); } };
+$('#bExport').onclick = () => {
+  const a = el('a', { href: URL.createObjectURL(new Blob([JSON.stringify({ lists: state.lists }, null, 2)], { type: 'application/json' })), download: 'welle-playlists.json' });
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$('#bImport').onclick = () => $('#importFile').click();
+$('#importFile').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const lists = (data.lists || []).filter((l) => l && typeof l.name === 'string' && Array.isArray(l.tracks));
+    for (const l of lists) createList(l.name, l.tracks.filter((t) => t && /^[\w-]{11}$/.test(t.id)).map((t) => ({ id: t.id, title: String(t.title || 'Unbekannt'), artist: String(t.artist || '') })));
+    toast(lists.length + ' Playlists importiert');
+  } catch { toast('Die Datei konnte nicht gelesen werden'); }
+  e.target.value = '';
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); toggle(); }
+  if (e.key === 'n' || e.key === 'N') next(false);
+  if (e.key === 'p' || e.key === 'P') prev();
+});
+if ('mediaSession' in navigator) {
+  navigator.mediaSession.setActionHandler('nexttrack', () => next(false));
+  navigator.mediaSession.setActionHandler('previoustrack', prev);
+  navigator.mediaSession.setActionHandler('play', toggle);
+  navigator.mediaSession.setActionHandler('pause', toggle);
+}
+
+if (!state.queue[state.idx]) state.idx = state.queue.length ? 0 : -1;
+show(['search', 'queue', 'lists', 'settings'].includes(state.view) ? state.view : 'search');
+renderAll();
+if (!state.key) needKey();
+document.head.append(el('script', { src: 'https://www.youtube.com/iframe_api' }));
+</script>
+</body>
+</html>
