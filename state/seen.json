@@ -1,14 +1,16 @@
 {
  "last_run": {
-  "google_shopping": 1795160366
+  "google_shopping": 1795246233
  },
  "links": {
   "google|Basket4Ballers|Nike Herren Air Force 1 Low Kobe Bryant Forever Lower Merion Away": "https://www.basket4ballers.com/de/nouveautes/60937-nike-kobe-air-force-1-low-team-red-white-ib0018-600.html?srsltid=AYCX9vK8cE8AGWxDQBy9xxxftj92xOFEF4QgclcPkYkTVx0BpyPqsNQOEtg#/81-tailles-45",
   "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 44": "https://www.basket4ballers.com/de/kobe-bryant/56107-nike-kobe-9-elite-low-protro-white-purple-ih1401-100.html?srsltid=AYCX9vIdkzqCn6LJQdhNmvFFEOPsT_SAf2ySiftPblPKj-ItJbKB9ZMsqD0#/80-tailles-44",
   "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 45": "https://www.basket4ballers.com/de/kobe-bryant/56107-nike-kobe-9-elite-low-protro-white-purple-ih1401-100.html?srsltid=AYCX9vIHWFtJT26oyFV6Zib6x39xPs2c_J3n5q-0k5Ke9cF571DYOAWPdvo#/81-tailles-45",
   "google|Basket4Ballers|Nike Kobe 9 Elite Low EM Protro - Wei\u00df - 45.5": "https://www.basket4ballers.com/de/kobe-bryant/56107-nike-kobe-9-elite-low-protro-white-purple-ih1401-100.html?srsltid=AYCX9vJ5gai9jQGVsADLHFN_aVP2sik_YaWY2v4PtVLfraryP1qhaROKG6A#/94-tailles-455",
+  "google|Nike Offiziell|Air Jordan 1 Mid Herren": "https://www.nike.com/de/t/air-jordan-1-mid-schuh-herren-QJTvQh/554724-078?nikegos=true",
   "google|Nike Offiziell|Nike Basketballschuhe G.T. Cut 4 Jordan Poole": "https://www.nike.com/de/t/gt-cut-4-jordan-poole-basketballschuh-t0xmCAhe/IR7206-700?nikegos=true",
   "google|Nike Offiziell|Nike G.T Herren. Future": "https://www.nike.com/de/t/gt-future-basketballschuhe-OyMbWVQO/FZ5590-004?nikegos=true",
+  "google|Nike Offiziell|Nike Herren G.T Cut Academy 2": "https://www.nike.com/de/t/gt-cut-academy-2-basketballschuh-KR3H9TWw/HV9774-001?nikegos=true",
   "google|Nike Offiziell|Nike Mind 002 Herren Black Hyper Crimson": "https://www.nike.com/de/t/mind-002-pregame-schuh-herren-1A8xmt36/HQ4308-001?nikegos=true",
   "google|Noirfonce DE|Nike Kobe 1 Protro Herren": "https://noirfonce.eu/de-de/products/nike-kobe-1-protro-81-points-im0542-100?channable=41a9766964003534373735393231383033353937ce&srsltid=AYCX9vKXFeYEx5r5Cxzdalt4keDfNe6EfGT6WhWPyE5KMYhGYUWU8IIewvg",
   "google|PUMA.com|Puma MB World.01 Basketballschuhe Unisex": "https://eu.puma.com/de/de/pd/mb-world.01-basketballschuhe-unisex/313234?swatch=04&srsltid=AYCX9vI5GPaKAeUzpBjGciUPGLQAPopR1tjYX8YpthSPQq8vYc52WBnqBIc",
@@ -24,7 +26,8 @@
   "google|adidas.de|adidas Climacool F50 Herren": "https://www.adidas.de/climacool-f50-schuh/KI9347.html",
   "google|adidas.de|adidas Harden Herren Volume 10": "https://www.adidas.de/harden-volume-10-schuh/JQ9453.html",
   "google|adidas.de|adidas Herren Anthony Edwards 1 Low": "https://www.adidas.de/anthony-edwards-1-low-basketballschuh/JQ6140.html",
-  "google|adidas.de|adidas Herren Anthony Edwards 2": "https://www.adidas.de/anthony-edwards-2-schuh/KK1390.html"
+  "google|adidas.de|adidas Herren Anthony Edwards 2": "https://www.adidas.de/anthony-edwards-2-schuh/KK1390.html",
+  "google|afew-store.com|Nike Kobe Herren IX Elite Low EM Protro": "https://de.afew-store.com/products/nike-kobe-ix-elite-low-em-protro-light-silver-steam-summit-white?variant=52778624483594&srsltid=AYCX9vKF_aG8McJoAnb1aA9-iOL6nHjXXLO-1qdw5I7gGFH5x9iTCsC2QGs"
  },
  "seen": {
   "google:Basket4Ballers|https://www.google.com/search?ibp=oshop&q=Nike Kobe Gr\u00f6\u00dfe 50.5&prds=productid:13188072045086223264,headlineOfferDocid:13188072045086223264,imageDocid:16316524865817520319,rds:PC_10996573225458348396|PROD_PC_10996573225458348396,pvt:a&hl=de&gl=de&udm=28|": {
@@ -98,6 +101,10 @@
   "google|adidas.de|adidas Herren Harden Volume 10": {
    "price": 80.0,
    "ts": 1794692664
+  },
+  "stockx|nike-kobe-8-protro-shanghai-fireworks-2026|16": {
+   "price": 262.0,
+   "ts": 1795246296
   },
   "stockx|nike-kobe-9-em-low-protro-philippines-2026|16": {
    "price": 280.0,
